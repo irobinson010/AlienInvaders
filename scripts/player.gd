@@ -7,6 +7,7 @@ signal fired(origin: Vector2, direction: Vector2)
 var play_bounds := Rect2(Vector2(70.0, 110.0), Vector2(1140.0, 540.0))
 var aim_direction := Vector2.RIGHT
 var fire_cooldown := 0.0
+var weapon_style := "nailgun"
 
 
 func _ready() -> void:
@@ -50,11 +51,24 @@ func set_move_speed(new_move_speed: float) -> void:
 	move_speed = new_move_speed
 
 
+func set_weapon_style(new_weapon_style: String) -> void:
+	weapon_style = new_weapon_style
+	queue_redraw()
+
+
 func _draw() -> void:
 	draw_circle(Vector2.ZERO, 16.0, Color8(69, 107, 192))
-	draw_rect(Rect2(Vector2(2.0, -5.0), Vector2(24.0, 10.0)), Color8(242, 143, 59))
+	if weapon_style == "scrap_blaster":
+		draw_rect(Rect2(Vector2(-1.0, -7.0), Vector2(28.0, 14.0)), Color8(112, 132, 148))
+		draw_rect(Rect2(Vector2(18.0, -5.0), Vector2(14.0, 10.0)), Color8(234, 155, 82))
+		draw_circle(Vector2(6.0, -13.0), 6.0, Color8(227, 201, 127))
+	else:
+		draw_rect(Rect2(Vector2(2.0, -5.0), Vector2(24.0, 10.0)), Color8(242, 143, 59))
 	draw_circle(Vector2(-5.0, -17.0), 10.0, Color8(245, 214, 181))
 	draw_line(Vector2(-5.0, 11.0), Vector2(-13.0, 24.0), Color8(77, 58, 41), 4.0, true)
 	draw_line(Vector2(3.0, 11.0), Vector2(11.0, 24.0), Color8(77, 58, 41), 4.0, true)
 	draw_line(Vector2(-8.0, -4.0), Vector2(-20.0, 6.0), Color8(245, 214, 181), 4.0, true)
-	draw_line(Vector2(2.0, -2.0), Vector2(28.0, -2.0), Color8(56, 47, 39), 6.0, true)
+	if weapon_style == "scrap_blaster":
+		draw_line(Vector2(2.0, -2.0), Vector2(32.0, -2.0), Color8(48, 44, 38), 8.0, true)
+	else:
+		draw_line(Vector2(2.0, -2.0), Vector2(28.0, -2.0), Color8(56, 47, 39), 6.0, true)

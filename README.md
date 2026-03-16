@@ -2,7 +2,7 @@
 
 `AlienInvaders` is a 2D Godot game about Eli Miller, a farm kid who turns scrap, farm hardware, and alien wreckage into weapons while defending his family's land from an invasion.
 
-The current prototype is a top-down Act 1 defense loop built for Godot 4.5 with the Compatibility renderer so it stays on a web-safe path.
+The current prototype is a top-down Act 1 defense loop built and validated on Godot 4.6.1 with the Compatibility renderer so it stays on a web-safe path.
 
 ## Premise
 
@@ -21,13 +21,19 @@ The project currently includes:
 - A playable top-down farm defense prototype.
 - A 6-wave Act 1 mission flow with story briefings between waves.
 - Patch path selection after the first wave, with follow-up upgrades later in the act.
-- Placeable coil turrets, alien rushes, salvage collection, fail/restart flow, and an Act 1 completion state.
+- Placeable coil turrets, unlockable shock posts, alien rushes, salvage collection, fail/restart flow, and an Act 1 completion state.
+- Workshop unlocks for Eli's scrap blaster and other between-wave inventions.
+- Drill-rig objectives, harrier enemies, and a visible buried field signal in the north-field waves.
+- Integrated combat music and positional SFX for Eli, Patch, weapons, and alien events.
 
 ## Controls
 
 - `WASD` or arrow keys: move Eli
 - Mouse or `Space`: fire
-- Left click on a build pad: place a turret
+- `Q`: swap Eli's weapon after the scrap blaster is unlocked
+- `1`: select the coil turret build
+- `2`: select the shock post build after it is unlocked
+- Left click on a build pad: place the selected defense
 - `R`: restart the run after failure or Act 1 completion
 
 ## Project Layout
@@ -38,10 +44,10 @@ The project currently includes:
 
 ## Running Locally
 
-Open the project in Godot 4.5.x or run it directly with the local binary from the parent directory:
+Open the project in Godot 4.6.x or run it directly with the local binary from the parent directory:
 
 ```bash
-../Godot_v4.5.1-stable_linux.x86_64 --path .
+../godot.x86_64 --path .
 ```
 
 Headless validation:
@@ -49,7 +55,7 @@ Headless validation:
 ```bash
 XDG_DATA_HOME="$(pwd)/.xdg-data" \
 XDG_CONFIG_HOME="$(pwd)/.xdg-config" \
-../Godot_v4.5.1-stable_linux.x86_64 --headless --path . --quit
+../godot.x86_64 --headless --path . --quit
 ```
 
 The XDG overrides keep Godot's generated state inside the repo directory instead of writing to a user profile path.
@@ -68,7 +74,7 @@ Current design constraints:
 
 ## Next Steps
 
-- Add a between-wave upgrade screen for Eli's inventions.
-- Extend Act 1 enemy variety and drill-site behavior.
+- Add one more alien role so late Act 1 waves are not just scouts plus drillers.
+- Make the buried north-field signal visible on the map instead of keeping it only in text and drill objectives.
+- Add and test the HTML5 export preset for the S3 and CloudFront deployment path.
 - Build Act 2 around what the aliens are trying to extract from the north field.
-- Add and document the final export preset and deployment workflow.

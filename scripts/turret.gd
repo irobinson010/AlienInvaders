@@ -1,5 +1,7 @@
 extends Node2D
 
+signal fired_shot(origin: Vector2)
+
 var bullet_scene: PackedScene
 var range := 230.0
 var fire_interval := 0.80
@@ -10,6 +12,7 @@ var bullet_damage := 1
 func _ready() -> void:
 	z_index = 12
 	add_to_group("turrets")
+	add_to_group("coil_turrets")
 
 
 func configure(new_bullet_scene: PackedScene, new_fire_interval: float = 0.80, new_bullet_damage: int = 1) -> void:
@@ -42,6 +45,7 @@ func _physics_process(delta: float) -> void:
 	bullet.global_position = global_position + aim.normalized() * 28.0
 	bullet.configure(aim, 620.0, bullet_damage)
 	get_parent().add_child(bullet)
+	fired_shot.emit(bullet.global_position)
 
 
 func _find_target() -> Node2D:

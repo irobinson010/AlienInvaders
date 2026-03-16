@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=4]
+
+[ext_resource type="Script" path="res://scripts/field_signal.gd" id="1"]
+
+[node name="FieldSignal" type="Node2D"]
+script = ExtResource("1")

@@ -1,5 +1,8 @@
 extends CharacterBody2D
 
+signal barked(world_position: Vector2)
+signal growled(world_position: Vector2)
+
 const PATCH_NONE := 0
 const PATCH_SCRAP := 1
 const PATCH_GUARD := 2
@@ -126,6 +129,7 @@ func _physics_process(delta: float) -> void:
 			if chase_vector.length() <= bite_range and bite_cooldown <= 0.0:
 				if target.has_method("take_damage"):
 					target.take_damage(1)
+				growled.emit(global_position)
 				bite_cooldown = bite_cooldown_time
 
 	if move_vector.length() > 4.0:
@@ -152,6 +156,7 @@ func _try_guard_bark() -> void:
 	if stunned_any:
 		bark_cooldown = maxf(2.8, 7.2 - float(path_rank) * 1.45)
 		bark_flash = 0.16
+		barked.emit(global_position)
 		queue_redraw()
 
 
