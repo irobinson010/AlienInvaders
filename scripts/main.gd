@@ -10,6 +10,7 @@ enum PatchPath {
 const WORLD_SIZE := Vector2(1280.0, 720.0)
 const PLAY_BOUNDS := Rect2(Vector2(70.0, 110.0), Vector2(1140.0, 540.0))
 const FARMHOUSE_POS := Vector2(640.0, 610.0)
+const DRILL_SITE_POS := Vector2(640.0, 386.0)
 const BASE_TURRET_COST := 8
 const ACT_ONE_WAVES = [
 	{
@@ -17,24 +18,30 @@ const ACT_ONE_WAVES = [
 		"story": "Strange lights sweep over the corn. Eli grabs his barn-built nailgun while Patch circles the porch, waiting for the first landing.",
 		"objective": "Hold the north fence against 6 scout saucers.",
 		"spawn_count": 6,
+		"driller_count": 0,
 		"spawn_interval": 1.95,
 		"start_delay": 0.80,
 		"spawn_mode": "top",
 	},
 	{
 		"title": "Wave 2: Fence Breakers",
-		"story": "The first wrecks are still smoking. Patch takes on a real job while a second alien rush lines up over the field.",
-		"objective": "Stop 8 raiders and put Patch's first training to work.",
+		"story": "The first wrecks are still smoking. Patch takes on a real job while a second alien rush lines up over the field with a heavier breaker in the mix.",
+		"objective": "Stop 8 raiders, including the first driller brute, and put Patch's first training to work.",
 		"spawn_count": 8,
+		"driller_count": 1,
 		"spawn_interval": 1.75,
 		"start_delay": 0.75,
 		"spawn_mode": "mixed",
 	},
 	{
 		"title": "Wave 3: Drill Team",
-		"story": "The invaders stop probing and start drilling. Eli can hear metal boring under the topsoil every time the lane goes quiet.",
-		"objective": "Break 10 drill-team attackers before they punch through the barn lane.",
+		"story": "The invaders stop probing and start drilling. A real rig unfolds in the north field while driller aliens sprint to feed it power.",
+		"objective": "Destroy the north-field drill rig and break 10 attackers before it breaches the field.",
 		"spawn_count": 10,
+		"driller_count": 2,
+		"drill_site": true,
+		"drill_rate": 2.30,
+		"drill_health": 10,
 		"spawn_interval": 1.50,
 		"start_delay": 0.70,
 		"spawn_mode": "sides",
@@ -44,6 +51,7 @@ const ACT_ONE_WAVES = [
 		"story": "Crop circles are no longer random. The whole north field is lining up around something buried deep below the roots.",
 		"objective": "Clear 12 invaders while Eli and Patch hold the signal line.",
 		"spawn_count": 12,
+		"driller_count": 2,
 		"spawn_interval": 1.30,
 		"start_delay": 0.70,
 		"spawn_mode": "top",
@@ -53,15 +61,20 @@ const ACT_ONE_WAVES = [
 		"story": "More lights peel off the mothership. The farmhouse porch shakes as a harvester run starts forming over the silo.",
 		"objective": "Hold off 14 attackers before the harvester locks onto the farm.",
 		"spawn_count": 14,
+		"driller_count": 3,
 		"spawn_interval": 1.10,
 		"start_delay": 0.65,
 		"spawn_mode": "mixed",
 	},
 	{
 		"title": "Wave 6: Final Stand At The Silo",
-		"story": "Everything comes in at once. Eli has one night of inventions, one dog, and one chance to keep the field out of alien hands.",
-		"objective": "Survive the last 16 attackers and keep the farmhouse standing.",
+		"story": "Everything comes in at once. A command drill rig locks onto the signal under the field while the biggest driller wave of the night crashes toward the farm.",
+		"objective": "Smash the command drill rig, survive the last 16 attackers, and keep the farmhouse standing.",
 		"spawn_count": 16,
+		"driller_count": 4,
+		"drill_site": true,
+		"drill_rate": 3.10,
+		"drill_health": 14,
 		"spawn_interval": 0.92,
 		"start_delay": 0.60,
 		"spawn_mode": "mixed",
@@ -71,12 +84,14 @@ const ACT_ONE_WAVES = [
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const DOG_SCENE := preload("res://scenes/dog.tscn")
 const ALIEN_SCENE := preload("res://scenes/alien.tscn")
+const DRILL_RIG_SCENE := preload("res://scenes/drill_rig.tscn")
 const BULLET_SCENE := preload("res://scenes/bullet.tscn")
 const TURRET_SCENE := preload("res://scenes/turret.tscn")
 const BUILD_SPOT_SCENE := preload("res://scenes/build_spot.tscn")
 
 var player: CharacterBody2D
 var dog: CharacterBody2D
+var current_drill_site: StaticBody2D
 var stats_label: Label
 var banner_label: Label
 var hint_label: Label
@@ -124,6 +139,7 @@ var pending_wave_index := -1
 var wave_total_spawns := 0
 var wave_spawned := 0
 var active_aliens := 0
+var wave_drillers_remaining := 0
 var current_wave_spawn_interval := 1.50
 var current_wave_start_delay := 0.80
 var current_wave_spawn_mode := "mixed"
@@ -479,8 +495,10 @@ func _start_wave(wave_index: int) -> void:
 	current_wave_spawn_mode = String(wave_data["spawn_mode"])
 	current_objective_text = String(wave_data["objective"])
 	wave_total_spawns = int(wave_data["spawn_count"])
+	wave_drillers_remaining = int(wave_data["driller_count"])
 	wave_spawned = 0
 	active_aliens = 0
+	_spawn_wave_objectives(wave_data)
 	banner_default = _story_text_for_wave(wave)
 	_set_banner(banner_default, 3.0)
 	_update_hint()
@@ -498,16 +516,59 @@ func _spawn_alien() -> void:
 	if game_over or mission_complete or not wave_active:
 		return
 
+	var enemy_kind: String = _pick_enemy_kind()
 	var alien: CharacterBody2D = ALIEN_SCENE.instantiate() as CharacterBody2D
 	var spawn_position: Vector2 = _pick_spawn_position(current_wave_spawn_mode)
 	var goal_position: Vector2 = FARMHOUSE_POS + Vector2(randf_range(-92.0, 92.0), randf_range(-30.0, 24.0))
-	alien.configure(spawn_position, goal_position, wave)
+	var targets_drill_site := false
+	if enemy_kind == "driller" and _has_live_drill_site():
+		goal_position = current_drill_site.global_position
+		targets_drill_site = true
+	alien.configure(spawn_position, goal_position, wave, enemy_kind, targets_drill_site)
 	alien.destroyed.connect(_on_alien_destroyed)
 	alien.farmhouse_hit.connect(_on_alien_farmhouse_hit)
+	alien.drill_site_reached.connect(_on_alien_drill_site_reached)
 	add_child(alien)
 	wave_spawned += 1
 	active_aliens += 1
 	_update_stats()
+
+
+func _spawn_wave_objectives(wave_data: Dictionary) -> void:
+	current_drill_site = null
+	if not bool(wave_data.get("drill_site", false)):
+		return
+
+	var drill_rig: StaticBody2D = DRILL_RIG_SCENE.instantiate() as StaticBody2D
+	drill_rig.position = DRILL_SITE_POS
+	drill_rig.configure(int(wave_data["drill_health"]), float(wave_data["drill_rate"]), 4 + wave)
+	drill_rig.destroyed.connect(_on_drill_site_destroyed)
+	drill_rig.breached.connect(_on_drill_site_breached)
+	add_child(drill_rig)
+	current_drill_site = drill_rig
+	active_aliens += 1
+
+
+func _pick_enemy_kind() -> String:
+	if wave_drillers_remaining <= 0:
+		return "scout"
+
+	var should_spawn_driller := false
+	var remaining_slots: int = wave_total_spawns - wave_spawned
+	if wave_spawned >= int(floor(float(wave_total_spawns) * 0.5)):
+		should_spawn_driller = true
+	if remaining_slots <= wave_drillers_remaining:
+		should_spawn_driller = true
+
+	if should_spawn_driller:
+		wave_drillers_remaining -= 1
+		return "driller"
+
+	return "scout"
+
+
+func _has_live_drill_site() -> bool:
+	return current_drill_site != null and is_instance_valid(current_drill_site)
 
 
 func _pick_spawn_position(spawn_mode: String) -> Vector2:
@@ -937,6 +998,18 @@ func _on_alien_destroyed(scrap_value: int, _world_position: Vector2) -> void:
 	_check_wave_completion()
 
 
+func _on_alien_drill_site_reached(progress_boost: float) -> void:
+	if game_over:
+		return
+
+	active_aliens = maxi(0, active_aliens - 1)
+	if _has_live_drill_site():
+		current_drill_site.boost_progress(progress_boost)
+		_set_banner("A driller fed the north-field rig.", 1.6)
+	_update_stats()
+	_check_wave_completion()
+
+
 func _on_alien_farmhouse_hit(damage: int) -> void:
 	if game_over:
 		return
@@ -944,11 +1017,32 @@ func _on_alien_farmhouse_hit(damage: int) -> void:
 	active_aliens = maxi(0, active_aliens - 1)
 	base_health -= damage
 	if base_health <= 0:
-		_trigger_game_over()
+		_trigger_game_over("The farmhouse is gone. Reset and hold the line again.")
 	else:
 		_set_banner("The farmhouse took a hit!", 1.4)
 		_update_stats()
 		_check_wave_completion()
+
+
+func _on_drill_site_destroyed(scrap_value: int, _world_position: Vector2) -> void:
+	if game_over:
+		return
+
+	active_aliens = maxi(0, active_aliens - 1)
+	current_drill_site = null
+	scrap += scrap_value
+	_set_banner("North-field drill rig destroyed.", 2.0)
+	_update_stats()
+	_check_wave_completion()
+
+
+func _on_drill_site_breached() -> void:
+	if game_over:
+		return
+
+	active_aliens = maxi(0, active_aliens - 1)
+	current_drill_site = null
+	_trigger_game_over("North field breached. The aliens drilled into what was buried below.")
 
 
 func _check_wave_completion() -> void:
@@ -1008,7 +1102,7 @@ func _mission_outro_for_patch() -> String:
 			return "Patch fought as hard as Eli did, even before the farm figured out what role he should grow into."
 
 
-func _trigger_game_over() -> void:
+func _trigger_game_over(reason: String) -> void:
 	game_over = true
 	wave_active = false
 	base_health = 0
@@ -1021,7 +1115,7 @@ func _trigger_game_over() -> void:
 	get_tree().paused = false
 	banner_default = "Farm overrun. Press R to restart the defense."
 	banner_label.text = banner_default
-	current_objective_text = "The farmhouse is gone. Reset and hold the line again."
+	current_objective_text = reason
 	_update_hint()
 	_update_stats()
 
@@ -1090,15 +1184,15 @@ func _story_text_for_wave(current_wave: int) -> String:
 		2:
 			match patch_path:
 				PatchPath.SCRAP:
-					return "Wave 2: Patch starts pulling clean alloy from the smoking scouts."
+					return "Wave 2: Patch starts pulling clean alloy while the first driller brute hits the fence."
 				PatchPath.GUARD:
-					return "Wave 2: Patch locks onto the fence line and starts barking down rushes."
+					return "Wave 2: Patch locks onto the fence line as the first driller brute lumbers in."
 				PatchPath.SCOUT:
-					return "Wave 2: Patch starts sniffing around the north field markers."
+					return "Wave 2: Patch starts sniffing around the north field markers while a driller brute tests the lane."
 				_:
 					return "Wave 2: Eli decides what kind of war dog Patch needs to become."
 		3:
-			return "Wave 3: The barn bench spits out coil parts from salvaged alien cores."
+			return "Wave 3: The first north-field drill rig locks into the soil."
 		4:
 			match patch_path:
 				PatchPath.SCOUT:
@@ -1114,13 +1208,13 @@ func _story_text_for_wave(current_wave: int) -> String:
 		6:
 			match patch_path:
 				PatchPath.SCOUT:
-					return "Wave 6: Patch turns up sealed alien gear under the tractor shed."
+					return "Wave 6: Patch turns up sealed alien gear while the command rig drills for the signal."
 				PatchPath.SCRAP:
-					return "Wave 6: The salvage pile grows into a full workshop behind the barn."
+					return "Wave 6: The salvage pile grows into a full workshop as the command rig bores into the field."
 				PatchPath.GUARD:
-					return "Wave 6: Patch's bark rolls across the farm like thunder."
+					return "Wave 6: Patch's bark rolls across the farm while the command rig pounds the field."
 				_:
-					return "Wave 6: Eli turns the tractor shed into a war workshop."
+					return "Wave 6: A command rig hammers the field while Eli turns the tractor shed into a war workshop."
 		_:
 			return "The field stays loud with engines and falling metal."
 
