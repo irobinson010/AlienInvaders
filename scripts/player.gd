@@ -46,6 +46,10 @@ func set_fire_interval(new_fire_interval: float) -> void:
 	fire_interval = new_fire_interval
 
 
+func set_move_speed(new_move_speed: float) -> void:
+	move_speed = new_move_speed
+
+
 func _draw() -> void:
 	draw_circle(Vector2.ZERO, 16.0, Color8(69, 107, 192))
 	draw_rect(Rect2(Vector2(2.0, -5.0), Vector2(24.0, 10.0)), Color8(242, 143, 59))

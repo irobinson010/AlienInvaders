@@ -85,6 +85,13 @@ var briefing_title_label: Label
 var briefing_body_label: Label
 var briefing_footer_label: Label
 var briefing_continue_button: Button
+var upgrade_panel: PanelContainer
+var upgrade_title_label: Label
+var upgrade_body_label: Label
+var upgrade_footer_label: Label
+var upgrade_button_a: Button
+var upgrade_button_b: Button
+var upgrade_button_c: Button
 var patch_panel: PanelContainer
 var patch_title_label: Label
 var patch_body_label: Label
@@ -107,6 +114,7 @@ var patch_path := PatchPath.NONE
 var patch_rank := 0
 var player_bullet_damage := 1
 var player_fire_interval := 0.16
+var player_move_speed := 270.0
 var turret_damage := 1
 var turret_fire_interval := 0.80
 var turret_cost := BASE_TURRET_COST
@@ -119,6 +127,9 @@ var active_aliens := 0
 var current_wave_spawn_interval := 1.50
 var current_wave_start_delay := 0.80
 var current_wave_spawn_mode := "mixed"
+var pending_upgrade_choices: Array[Dictionary] = []
+var pending_upgrade_wave_index := -1
+var pending_transition_text := ""
 
 
 func _ready() -> void:
@@ -172,6 +183,7 @@ func _setup_ui() -> void:
 	bottom_panel.add_child(hint_label)
 
 	_setup_briefing_panel(canvas_layer)
+	_setup_upgrade_panel(canvas_layer)
 	_setup_patch_panel(canvas_layer)
 
 
@@ -227,6 +239,76 @@ func _setup_briefing_panel(canvas_layer: CanvasLayer) -> void:
 	briefing_continue_button.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	briefing_continue_button.pressed.connect(_on_briefing_continue_pressed)
 	content.add_child(briefing_continue_button)
+
+
+func _setup_upgrade_panel(canvas_layer: CanvasLayer) -> void:
+	upgrade_panel = PanelContainer.new()
+	upgrade_panel.position = Vector2(208.0, 116.0)
+	upgrade_panel.size = Vector2(864.0, 372.0)
+	upgrade_panel.visible = false
+	upgrade_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	upgrade_panel.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	canvas_layer.add_child(upgrade_panel)
+
+	var panel_style: StyleBoxFlat = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.12, 0.10, 0.08, 0.96)
+	panel_style.border_color = Color8(245, 204, 124)
+	panel_style.border_width_left = 3
+	panel_style.border_width_top = 3
+	panel_style.border_width_right = 3
+	panel_style.border_width_bottom = 3
+	panel_style.corner_radius_top_left = 12
+	panel_style.corner_radius_top_right = 12
+	panel_style.corner_radius_bottom_left = 12
+	panel_style.corner_radius_bottom_right = 12
+	upgrade_panel.add_theme_stylebox_override("panel", panel_style)
+
+	var content: VBoxContainer = VBoxContainer.new()
+	content.position = Vector2(24.0, 20.0)
+	content.size = Vector2(816.0, 326.0)
+	content.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	content.add_theme_constant_override("separation", 12)
+	upgrade_panel.add_child(content)
+
+	upgrade_title_label = Label.new()
+	upgrade_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	upgrade_title_label.modulate = Color8(255, 222, 165)
+	content.add_child(upgrade_title_label)
+
+	upgrade_body_label = Label.new()
+	upgrade_body_label.size = Vector2(816.0, 138.0)
+	upgrade_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	upgrade_body_label.modulate = Color8(239, 232, 213)
+	content.add_child(upgrade_body_label)
+
+	var buttons_row: HBoxContainer = HBoxContainer.new()
+	buttons_row.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	buttons_row.add_theme_constant_override("separation", 14)
+	content.add_child(buttons_row)
+
+	upgrade_button_a = Button.new()
+	upgrade_button_a.custom_minimum_size = Vector2(250.0, 90.0)
+	upgrade_button_a.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	upgrade_button_a.pressed.connect(_on_upgrade_selected.bind(0))
+	buttons_row.add_child(upgrade_button_a)
+
+	upgrade_button_b = Button.new()
+	upgrade_button_b.custom_minimum_size = Vector2(250.0, 90.0)
+	upgrade_button_b.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	upgrade_button_b.pressed.connect(_on_upgrade_selected.bind(1))
+	buttons_row.add_child(upgrade_button_b)
+
+	upgrade_button_c = Button.new()
+	upgrade_button_c.custom_minimum_size = Vector2(250.0, 90.0)
+	upgrade_button_c.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	upgrade_button_c.pressed.connect(_on_upgrade_selected.bind(2))
+	buttons_row.add_child(upgrade_button_c)
+
+	upgrade_footer_label = Label.new()
+	upgrade_footer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	upgrade_footer_label.modulate = Color8(191, 198, 207)
+	upgrade_footer_label.text = "Choose one invention. The others stay sketches on the workbench."
+	content.add_child(upgrade_footer_label)
 
 
 func _setup_patch_panel(canvas_layer: CanvasLayer) -> void:
@@ -319,6 +401,7 @@ func _spawn_player() -> void:
 	player = PLAYER_SCENE.instantiate() as CharacterBody2D
 	player.position = Vector2(640.0, 510.0)
 	player.play_bounds = PLAY_BOUNDS
+	player.set_move_speed(player_move_speed)
 	player.set_fire_interval(player_fire_interval)
 	player.fired.connect(_on_player_fired)
 	add_child(player)
@@ -359,6 +442,7 @@ func _show_briefing_for_wave(wave_index: int, transition_text: String = "") -> v
 	if wave_index == 0:
 		briefing_continue_button.text = "Start Defense"
 	briefing_panel.visible = true
+	upgrade_panel.visible = false
 	patch_panel.visible = false
 	get_tree().paused = true
 	banner_label.text = banner_default
@@ -452,6 +536,7 @@ func _show_patch_choice() -> void:
 	patch_body_label.text = "Scrap Hound turns wrecks into bonus salvage. Guard Dog learns stun barks and doubles down on crowd control. Scout Nose uncovers buried stashes, schematics, and upgrades Eli would never find on his own."
 	patch_panel.visible = true
 	briefing_panel.visible = false
+	upgrade_panel.visible = false
 	get_tree().paused = true
 	banner_label.text = banner_default
 	_update_hint()
@@ -462,7 +547,120 @@ func _on_patch_path_selected(selected_path: int) -> void:
 	patch_path = selected_path
 	var upgrade_text: String = _apply_patch_rank(1, false)
 	patch_panel.visible = false
-	_show_briefing_for_wave(1, "The first wrecks cool in the dirt while Eli picks Patch's lane.\n\nPatch upgrade: %s" % upgrade_text)
+	_show_upgrade_panel(1, "The first wrecks cool in the dirt while Eli picks Patch's lane.\n\nPatch upgrade: %s" % upgrade_text)
+
+
+func _show_upgrade_panel(next_wave_index: int, transition_text: String) -> void:
+	var next_wave_number: int = next_wave_index + 1
+	var options: Array[Dictionary] = _upgrade_options_for_wave(next_wave_number)
+	if options.is_empty():
+		_show_briefing_for_wave(next_wave_index, transition_text)
+		return
+
+	pending_upgrade_wave_index = next_wave_index
+	pending_transition_text = transition_text
+	pending_upgrade_choices = options
+	current_objective_text = "Choose Eli's next invention for wave %d." % next_wave_number
+	banner_default = "Barn workshop: pick one invention before wave %d." % next_wave_number
+	upgrade_title_label.text = "Workshop Break: Build One New Invention"
+	upgrade_body_label.text = _upgrade_panel_text(next_wave_number, transition_text)
+	upgrade_button_a.text = _upgrade_button_text(options[0])
+	upgrade_button_b.text = _upgrade_button_text(options[1])
+	upgrade_button_c.text = _upgrade_button_text(options[2])
+	upgrade_panel.visible = true
+	briefing_panel.visible = false
+	patch_panel.visible = false
+	get_tree().paused = true
+	banner_label.text = banner_default
+	_update_hint()
+	_update_stats()
+
+
+func _upgrade_panel_text(next_wave_number: int, transition_text: String) -> String:
+	var body_text := transition_text
+	if body_text != "":
+		body_text += "\n\n"
+	body_text += "Eli has time for one more bench-built upgrade before wave %d hits the fence." % next_wave_number
+	return body_text
+
+
+func _upgrade_button_text(option: Dictionary) -> String:
+	return "%s\n%s" % [String(option["name"]), String(option["description"])]
+
+
+func _upgrade_options_for_wave(next_wave_number: int) -> Array[Dictionary]:
+	var options: Array[Dictionary] = []
+	match next_wave_number:
+		2:
+			options = [
+				{"id":"fence_crank_repeater","name":"Fence Crank Repeater","description":"Tighten Eli's nailgun cycle for faster shots."},
+				{"id":"sheet_metal_siding","name":"Sheet-Metal Siding","description":"Bolt fresh plating onto the farmhouse. Base +2."},
+				{"id":"salvage_sled","name":"Salvage Sled","description":"Hook a crate behind the tractor. Gain 6 scrap now."}
+			]
+		3:
+			options = [
+				{"id":"capacitor_slugs","name":"Capacitor Slugs","description":"Overcharge the ammo feed. Player shots hit harder."},
+				{"id":"quick_weld_mounts","name":"Quick-Weld Mounts","description":"Let every turret track and fire faster."},
+				{"id":"coil_molds","name":"Coil Molds","description":"Reuse emitter shells. Turrets cost 1 less scrap."}
+			]
+		4:
+			options = [
+				{"id":"boot_springs","name":"Boot Springs","description":"Give Eli a faster strafe and retreat pace."},
+				{"id":"barn_batteries","name":"Barn Batteries","description":"Store extra charge in the shed. Gain 4 scrap and 1 base."},
+				_path_upgrade_option_for_wave_four()
+			]
+		5:
+			options = [
+				{"id":"shock_braid","name":"Shock Braid","description":"Wrap the turret emitters. Turrets deal more damage."},
+				{"id":"porch_reinforcement","name":"Porch Reinforcement","description":"Brace the front of the farmhouse. Base +3."},
+				{"id":"windmill_dynamo","name":"Windmill Dynamo","description":"Push more current through the farm grid for faster shots."}
+			]
+		6:
+			options = [
+				{"id":"storm_dynamo","name":"Storm Dynamo","description":"Turn the whole defense grid up for the final rush."},
+				{"id":"hotshot_feed","name":"Hotshot Feed","description":"Make Eli's weapon faster and meaner."},
+				_path_upgrade_option_for_wave_six()
+			]
+	return options
+
+
+func _path_upgrade_option_for_wave_four() -> Dictionary:
+	match patch_path:
+		PatchPath.SCRAP:
+			return {"id":"smelter_sorter","name":"Smelter Sorter","description":"Patch marks the clean alloy. Gain 8 scrap and cheaper turrets."}
+		PatchPath.GUARD:
+			return {"id":"lane_whistle","name":"Lane Whistle","description":"Tune the defense line around Patch. Turrets hit harder and base +1."}
+		PatchPath.SCOUT:
+			return {"id":"survey_scope","name":"Survey Scope","description":"Patch leads Eli to a buried lens. Player damage up and turrets get cheaper."}
+		_:
+			return {"id":"coil_lattice","name":"Coil Lattice","description":"Rebalance the emitters. Turrets deal more damage."}
+
+
+func _path_upgrade_option_for_wave_six() -> Dictionary:
+	match patch_path:
+		PatchPath.SCRAP:
+			return {"id":"forge_crates","name":"Forge Crates","description":"Turn the salvage pile into a war reserve. Big scrap gain and stronger turrets."}
+		PatchPath.GUARD:
+			return {"id":"shock_harness","name":"Shock Harness","description":"Patch anchors the lane while Eli hardens the house and gun."}
+		PatchPath.SCOUT:
+			return {"id":"deepfield_map","name":"Deepfield Map","description":"Patch's last find reveals one more hidden cache under the field."}
+		_:
+			return {"id":"silo_cache","name":"Silo Cache","description":"Crack open the last barn stash. Gain scrap and more base strength."}
+
+
+func _on_upgrade_selected(choice_index: int) -> void:
+	if choice_index < 0 or choice_index >= pending_upgrade_choices.size():
+		return
+
+	var selected_option: Dictionary = pending_upgrade_choices[choice_index]
+	var invention_text: String = _apply_invention_upgrade(String(selected_option["id"]))
+	var transition_text := pending_transition_text
+	if transition_text != "":
+		transition_text += "\n\n"
+	transition_text += "Eli invention: %s" % invention_text
+	pending_upgrade_choices.clear()
+	upgrade_panel.visible = false
+	_show_briefing_for_wave(pending_upgrade_wave_index, transition_text)
 
 
 func _apply_patch_rank(new_rank: int, announce_banner: bool = true) -> String:
@@ -538,6 +736,99 @@ func _prepare_transition_for_wave(next_wave_number: int) -> String:
 			transition_text += "\n\n"
 		transition_text += "Patch upgrade: %s" % upgrade_text
 	return transition_text
+
+
+func _apply_invention_upgrade(upgrade_id: String) -> String:
+	match upgrade_id:
+		"fence_crank_repeater":
+			player_fire_interval = maxf(0.10, player_fire_interval - 0.02)
+			player.set_fire_interval(player_fire_interval)
+			return "Fence Crank Repeater online. Eli can cycle shots faster."
+		"sheet_metal_siding":
+			base_health += 2
+			return "Sheet-Metal Siding installed. The farmhouse can take more punishment."
+		"salvage_sled":
+			scrap += 6
+			return "Salvage Sled built. Eli drags 6 extra scrap into the barn."
+		"capacitor_slugs":
+			player_bullet_damage += 1
+			return "Capacitor Slugs packed. Eli's shots now hit harder."
+		"quick_weld_mounts":
+			turret_fire_interval = maxf(0.48, turret_fire_interval - 0.10)
+			_refresh_turret_stats()
+			return "Quick-Weld Mounts fitted. Coil turrets cycle faster."
+		"coil_molds":
+			turret_cost = maxi(4, turret_cost - 1)
+			return "Coil Molds finished. New turrets cost %d scrap." % turret_cost
+		"boot_springs":
+			player_move_speed += 24.0
+			player.set_move_speed(player_move_speed)
+			return "Boot Springs locked in. Eli moves faster between lanes."
+		"barn_batteries":
+			base_health += 1
+			scrap += 4
+			return "Barn Batteries charged. The house gains 1 base and Eli banks 4 scrap."
+		"smelter_sorter":
+			scrap += 8
+			turret_cost = maxi(4, turret_cost - 1)
+			return "Smelter Sorter running. Patch helps pull 8 scrap and turrets drop to %d." % turret_cost
+		"lane_whistle":
+			turret_damage += 1
+			base_health += 1
+			_refresh_turret_stats()
+			return "Lane Whistle tuned. Turrets hit harder and the farmhouse gets 1 extra base."
+		"survey_scope":
+			player_bullet_damage += 1
+			turret_cost = maxi(4, turret_cost - 1)
+			return "Survey Scope mounted. Eli's shots hit harder and turrets now cost %d." % turret_cost
+		"coil_lattice":
+			turret_damage += 1
+			_refresh_turret_stats()
+			return "Coil Lattice finished. Turrets deal more damage."
+		"shock_braid":
+			turret_damage += 1
+			_refresh_turret_stats()
+			return "Shock Braid wrapped across the emitters. Turrets hit harder."
+		"porch_reinforcement":
+			base_health += 3
+			return "Porch Reinforcement complete. The farmhouse gains 3 base."
+		"windmill_dynamo":
+			player_fire_interval = maxf(0.08, player_fire_interval - 0.015)
+			turret_fire_interval = maxf(0.44, turret_fire_interval - 0.06)
+			player.set_fire_interval(player_fire_interval)
+			_refresh_turret_stats()
+			return "Windmill Dynamo spins up the whole farm grid. Eli and the turrets fire faster."
+		"storm_dynamo":
+			turret_fire_interval = maxf(0.38, turret_fire_interval - 0.08)
+			turret_damage += 1
+			_refresh_turret_stats()
+			return "Storm Dynamo armed. The final defense grid fires faster and harder."
+		"hotshot_feed":
+			player_fire_interval = maxf(0.08, player_fire_interval - 0.02)
+			player_bullet_damage += 1
+			player.set_fire_interval(player_fire_interval)
+			return "Hotshot Feed loaded. Eli shoots faster and every round bites deeper."
+		"forge_crates":
+			scrap += 10
+			turret_damage += 1
+			_refresh_turret_stats()
+			return "Forge Crates cracked open. Eli banks 10 scrap and the turret line gets meaner."
+		"shock_harness":
+			base_health += 2
+			player_fire_interval = maxf(0.08, player_fire_interval - 0.02)
+			player.set_fire_interval(player_fire_interval)
+			return "Shock Harness rigged. Patch holds the lane while Eli gets faster and the house gains 2 base."
+		"deepfield_map":
+			scrap += 6
+			player_bullet_damage += 1
+			base_health += 1
+			return "Deepfield Map decoded. Patch finds 6 scrap, Eli hits harder, and the house gains 1 base."
+		"silo_cache":
+			scrap += 6
+			base_health += 2
+			return "Silo Cache opened. Eli finds 6 scrap and braces the farmhouse for 2 more base."
+		_:
+			return "Eli scribbles a new plan, but it does not change the defense yet."
 
 
 func _desired_patch_rank_for_wave(next_wave_number: int) -> int:
@@ -698,6 +989,7 @@ func _show_mission_complete() -> void:
 	briefing_footer_label.text = "Act 2 can grow from here. For now, this run ends with the farm still standing."
 	briefing_continue_button.text = "Restart Act 1"
 	briefing_panel.visible = true
+	upgrade_panel.visible = false
 	patch_panel.visible = false
 	get_tree().paused = true
 	_update_hint()
@@ -723,6 +1015,7 @@ func _trigger_game_over() -> void:
 	spawn_timer.stop()
 	banner_timer.stop()
 	briefing_panel.visible = false
+	upgrade_panel.visible = false
 	if patch_panel.visible:
 		patch_panel.visible = false
 	get_tree().paused = false
