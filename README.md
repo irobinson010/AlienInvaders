@@ -72,9 +72,25 @@ Current design constraints:
 - Serve `.wasm` files with `application/wasm`.
 - Serve the export as static files, with `index.html` as the default root object.
 
+Current status:
+
+- `export_presets.cfg` now includes a non-threaded `Web` preset.
+- The preset is wired to local custom templates under `export_templates/4.6.1.stable/`.
+- A release export succeeds with Godot `4.6.1` and writes the site to `build/web/`.
+
+Export command:
+
+```bash
+XDG_DATA_HOME="$(pwd)/.xdg-data" \
+XDG_CONFIG_HOME="$(pwd)/.xdg-config" \
+../godot.x86_64 --headless --path . --export-release Web build/web/index.html
+```
+
+The `export_templates/` directory is ignored by git, so another machine will need the same local web templates or a standard Godot export-template install before exporting.
+
 ## Next Steps
 
-- Add one more alien role so late Act 1 waves are not just scouts plus drillers.
-- Make the buried north-field signal visible on the map instead of keeping it only in text and drill objectives.
-- Add and test the HTML5 export preset for the S3 and CloudFront deployment path.
+- Run a browser smoke test against the exported `build/web/` files from a local static server.
+- Trim what gets packed into the Web export if the `.pck` grows too quickly.
+- Add a second map objective or mid-wave event so late Act 1 waves are not only stronger versions of the same defense shape.
 - Build Act 2 around what the aliens are trying to extract from the north field.

@@ -2,3 +2,5 @@
 .import/
 .xdg-config/
 .xdg-data/
+build/
+export_templates/
