@@ -3,6 +3,7 @@ extends CharacterBody2D
 signal fired(origin: Vector2, direction: Vector2)
 
 @export var move_speed := 270.0
+@export var fire_interval := 0.16
 var play_bounds := Rect2(Vector2(70.0, 110.0), Vector2(1140.0, 540.0))
 var aim_direction := Vector2.RIGHT
 var fire_cooldown := 0.0
@@ -37,8 +38,12 @@ func _physics_process(delta: float) -> void:
 	fire_cooldown = maxf(0.0, fire_cooldown - delta)
 
 	if (Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or Input.is_action_pressed("fire")) and fire_cooldown <= 0.0:
-		fire_cooldown = 0.16
+		fire_cooldown = fire_interval
 		fired.emit(global_position + aim_direction * 28.0, aim_direction)
+
+
+func set_fire_interval(new_fire_interval: float) -> void:
+	fire_interval = new_fire_interval
 
 
 func _draw() -> void:
