@@ -2,12 +2,15 @@ extends StaticBody2D
 
 signal destroyed(scrap_value: int, world_position: Vector2)
 signal breached()
+signal damaged(world_position: Vector2)
 
 var health := 10
+var max_health := 10
 var scrap_value := 5
 var drill_rate := 2.0
 var drill_progress := 0.0
 var drill_goal := 100.0
+var hit_flash := 0.0
 
 
 func _ready() -> void:
@@ -26,13 +29,18 @@ func _ready() -> void:
 
 func configure(new_health: int, new_drill_rate: float, new_scrap_value: int = 5) -> void:
 	health = new_health
+	max_health = new_health
 	drill_rate = new_drill_rate
 	scrap_value = new_scrap_value
 	drill_progress = 0.0
+	hit_flash = 0.0
 	queue_redraw()
 
 
 func _physics_process(delta: float) -> void:
+	if hit_flash > 0.0:
+		hit_flash = maxf(0.0, hit_flash - delta)
+
 	drill_progress = minf(drill_goal, drill_progress + drill_rate * delta)
 	if drill_progress >= drill_goal:
 		breached.emit()
@@ -56,6 +64,8 @@ func take_damage(amount: int) -> void:
 		destroyed.emit(scrap_value, global_position)
 		queue_free()
 		return
+	hit_flash = 0.18
+	damaged.emit(global_position)
 	queue_redraw()
 
 
@@ -63,13 +73,31 @@ func get_progress_ratio() -> float:
 	return drill_progress / drill_goal
 
 
+func get_health() -> int:
+	return health
+
+
+func get_max_health() -> int:
+	return max_health
+
+
+func get_health_ratio() -> float:
+	if max_health <= 0:
+		return 0.0
+	return float(health) / float(max_health)
+
+
 func _draw() -> void:
 	var progress_ratio: float = get_progress_ratio()
+	var health_ratio: float = get_health_ratio()
 	var shell_color := Color8(108, 114, 132)
 	var beam_color := Color8(255, 118, 73)
 	if health <= 4:
 		shell_color = Color8(148, 88, 78)
 		beam_color = Color8(255, 156, 115)
+	if hit_flash > 0.0:
+		shell_color = Color8(208, 102, 84)
+		beam_color = Color8(255, 212, 160)
 
 	draw_rect(Rect2(Vector2(-30.0, -14.0), Vector2(60.0, 28.0)), shell_color)
 	draw_rect(Rect2(Vector2(-18.0, -42.0), Vector2(36.0, 28.0)), Color8(72, 76, 92))
@@ -80,5 +108,7 @@ func _draw() -> void:
 	draw_line(Vector2(16.0, -14.0), Vector2(28.0, -34.0), shell_color, 6.0, true)
 	draw_rect(Rect2(Vector2(-32.0, -74.0), Vector2(64.0, 8.0)), Color8(49, 43, 39))
 	draw_rect(Rect2(Vector2(-30.0, -72.0), Vector2(60.0 * progress_ratio, 4.0)), beam_color)
+	draw_rect(Rect2(Vector2(-32.0, -92.0), Vector2(64.0, 7.0)), Color8(38, 34, 30))
+	draw_rect(Rect2(Vector2(-30.0, -90.0), Vector2(60.0 * health_ratio, 3.0)), Color8(246, 120, 88))
 	draw_line(Vector2(0.0, -58.0), Vector2(0.0, -118.0), beam_color, 4.0, true)
 	draw_circle(Vector2(0.0, -120.0), 10.0 + progress_ratio * 8.0, Color(1.0, 0.62, 0.34, 0.35))

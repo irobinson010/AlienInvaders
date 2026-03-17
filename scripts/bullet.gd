@@ -36,7 +36,25 @@ func configure(new_direction: Vector2, new_speed: float = 860.0, new_damage: int
 
 
 func _physics_process(delta: float) -> void:
-	global_position += direction * speed * delta
+	var start_position := global_position
+	var end_position := start_position + direction * speed * delta
+	var query := PhysicsRayQueryParameters2D.new()
+	query.from = start_position
+	query.to = end_position
+	query.collision_mask = collision_mask
+	query.collide_with_bodies = true
+	query.collide_with_areas = false
+	query.hit_from_inside = true
+	query.exclude = [get_rid()]
+
+	var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(query)
+	if not hit.is_empty():
+		global_position = hit.get("position", end_position)
+		var collider: Variant = hit.get("collider")
+		_damage_target(collider)
+		return
+
+	global_position = end_position
 	lifetime -= delta
 
 	if lifetime <= 0.0:
@@ -48,6 +66,14 @@ func _physics_process(delta: float) -> void:
 
 
 func _on_body_entered(body: Node) -> void:
+	_damage_target(body)
+
+
+func _damage_target(target: Variant) -> void:
+	if not (target is Node):
+		return
+
+	var body: Node = target as Node
 	if body.is_in_group("aliens") and body.has_method("take_damage"):
 		body.take_damage(damage)
 		queue_free()

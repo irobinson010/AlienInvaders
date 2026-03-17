@@ -12,6 +12,16 @@ const PLAY_BOUNDS := Rect2(Vector2(70.0, 110.0), Vector2(1140.0, 540.0))
 const FARMHOUSE_POS := Vector2(640.0, 610.0)
 const DRILL_SITE_POS := Vector2(640.0, 386.0)
 const BASE_TURRET_COST := 8
+const FARM_STRUCTURE_ORDER := ["barn", "power_shed", "silo"]
+const FARM_STRUCTURE_REPAIR_PRIORITY := ["power_shed", "silo", "barn"]
+const FARM_STRUCTURE_DEFS := {
+	"barn": {"name":"Barn", "type":"barn", "position":Vector2(236.0, 542.0), "health":8},
+	"power_shed": {"name":"Power Shed", "type":"power_shed", "position":Vector2(938.0, 602.0), "health":6},
+	"silo": {"name":"Silo", "type":"silo", "position":Vector2(1054.0, 470.0), "health":9},
+}
+const BARN_SURVIVAL_BONUS := 2
+const POWER_SHED_FIRE_PENALTY := 1.30
+const SILO_DAMAGE_PENALTY := 1
 const ACT_ONE_WAVES = [
 	{
 		"title": "Act 1: First Contact",
@@ -26,11 +36,12 @@ const ACT_ONE_WAVES = [
 	},
 	{
 		"title": "Wave 2: Fence Breakers",
-		"story": "The first wrecks are still smoking. Patch takes on a real job while a second alien rush lines up over the field with a heavier breaker in the mix.",
-		"objective": "Stop 8 raiders, including the first driller brute, and put Patch's first training to work.",
+		"story": "The first wrecks are still smoking. Patch takes on a real job while a second alien rush lines up over the field, and a few raiders angle straight toward the farm's power shed.",
+		"objective": "Stop 8 raiders, including the first driller brute, and keep the power shed online.",
 		"spawn_count": 8,
 		"driller_count": 1,
 		"harrier_count": 0,
+		"structure_raids": [{"id":"power_shed", "count":2}],
 		"spawn_interval": 1.75,
 		"start_delay": 0.75,
 		"spawn_mode": "mixed",
@@ -51,36 +62,63 @@ const ACT_ONE_WAVES = [
 	},
 	{
 		"title": "Wave 4: North Field Signal",
-		"story": "Crop circles are no longer random. The whole north field is lining up around something buried deep below the roots while blue harriers start firing from above the rows.",
-		"objective": "Clear 12 invaders and bring down the first harrier screen over the signal line.",
+		"story": "Crop circles are no longer random. The whole north field lines up around a relay mast dropped over something buried deep below the roots while blue harriers start firing from above the rows and scouts slash toward Eli's barn workshop.",
+		"objective": "Destroy the signal relay, clear 12 invaders, and keep the barn workshop standing.",
 		"spawn_count": 12,
 		"driller_count": 2,
 		"harrier_count": 2,
+		"structure_raids": [{"id":"barn", "count":3}],
+		"relay_trigger_spawned": 5,
+		"relay_position": Vector2(316.0, 250.0),
+		"relay_health": 8,
+		"relay_interval": 5.30,
+		"relay_boost_multiplier": 1.25,
+		"relay_boost_duration": 3.00,
+		"relay_drill_boost": 0.0,
+		"relay_scrap": 5,
 		"spawn_interval": 1.30,
 		"start_delay": 0.70,
 		"spawn_mode": "top",
 	},
 	{
 		"title": "Wave 5: Harvester Approach",
-		"story": "More lights peel off the mothership. Harriers start strafing the farmhouse while heavier ground craft form up over the silo.",
-		"objective": "Hold off 14 attackers, including the harrier screen, before the harvester locks onto the farm.",
+		"story": "More lights peel off the mothership. A second relay slams down near the silo while harriers start strafing the farmhouse and raiders split off toward the silo and power shed.",
+		"objective": "Smash the new signal relay, hold off 14 attackers, and stop the silo and power shed from falling.",
 		"spawn_count": 14,
 		"driller_count": 3,
 		"harrier_count": 3,
+		"structure_raids": [{"id":"silo", "count":3}, {"id":"power_shed", "count":2}],
+		"relay_trigger_spawned": 6,
+		"relay_position": Vector2(980.0, 254.0),
+		"relay_health": 9,
+		"relay_interval": 4.90,
+		"relay_boost_multiplier": 1.30,
+		"relay_boost_duration": 3.20,
+		"relay_drill_boost": 0.0,
+		"relay_scrap": 6,
 		"spawn_interval": 1.10,
 		"start_delay": 0.65,
 		"spawn_mode": "mixed",
 	},
 	{
 		"title": "Wave 6: Final Stand At The Silo",
-		"story": "Everything comes in at once. A command drill rig locks onto the signal under the field while the biggest driller wave of the night crashes toward the farm and harriers strafe from above.",
-		"objective": "Smash the command drill rig, survive the last 16 attackers, and keep the farmhouse standing under harrier fire.",
+		"story": "Everything comes in at once. A command drill rig locks onto the signal under the field while a final relay drives the lane into a frenzy and raiders break for the barn, silo, and power shed under harrier fire.",
+		"objective": "Smash the command drill rig and final relay, survive 16 attackers, and keep the barn, silo, and power shed alive.",
 		"spawn_count": 16,
 		"driller_count": 4,
 		"harrier_count": 4,
 		"drill_site": true,
 		"drill_rate": 3.10,
 		"drill_health": 14,
+		"structure_raids": [{"id":"barn", "count":2}, {"id":"power_shed", "count":2}, {"id":"silo", "count":2}],
+		"relay_trigger_spawned": 7,
+		"relay_position": Vector2(980.0, 302.0),
+		"relay_health": 10,
+		"relay_interval": 4.50,
+		"relay_boost_multiplier": 1.35,
+		"relay_boost_duration": 3.50,
+		"relay_drill_boost": 6.5,
+		"relay_scrap": 7,
 		"spawn_interval": 0.92,
 		"start_delay": 0.60,
 		"spawn_mode": "mixed",
@@ -90,7 +128,9 @@ const ACT_ONE_WAVES = [
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const DOG_SCENE := preload("res://scenes/dog.tscn")
 const ALIEN_SCENE := preload("res://scenes/alien.tscn")
+const FARM_STRUCTURE_SCENE := preload("res://scenes/farm_structure.tscn")
 const DRILL_RIG_SCENE := preload("res://scenes/drill_rig.tscn")
+const SIGNAL_RELAY_SCENE := preload("res://scenes/signal_relay.tscn")
 const FIELD_SIGNAL_SCENE := preload("res://scenes/field_signal.tscn")
 const BULLET_SCENE := preload("res://scenes/bullet.tscn")
 const ENEMY_BOLT_SCENE := preload("res://scenes/enemy_bolt.tscn")
@@ -118,8 +158,10 @@ const SCRAP_BLASTER_SPREAD := 0.30
 var player: CharacterBody2D
 var dog: CharacterBody2D
 var current_drill_site: StaticBody2D
+var current_signal_relay: StaticBody2D
 var field_signal: Node2D
 var stats_label: Label
+var farm_status_label: Label
 var banner_label: Label
 var hint_label: Label
 var briefing_panel: PanelContainer
@@ -172,6 +214,8 @@ var shock_post_damage := 1
 var shock_post_fire_interval := 1.25
 var shock_post_stun_duration := 0.55
 var current_objective_text := "Review Eli's first defense plan."
+var base_wave_objective_text := "Review Eli's first defense plan."
+var farm_structures := {}
 var current_wave_index := -1
 var pending_wave_index := -1
 var wave_total_spawns := 0
@@ -182,6 +226,9 @@ var wave_harriers_remaining := 0
 var current_wave_spawn_interval := 1.50
 var current_wave_start_delay := 0.80
 var current_wave_spawn_mode := "mixed"
+var relay_spawned_for_wave := false
+var structure_raid_pool: Array[String] = []
+var structure_raid_notice_sent := false
 var pending_upgrade_choices: Array[Dictionary] = []
 var pending_upgrade_wave_index := -1
 var pending_transition_text := ""
@@ -195,6 +242,7 @@ func _ready() -> void:
 	_spawn_player()
 	_spawn_dog()
 	_spawn_field_signal()
+	_spawn_farm_structures()
 	_spawn_build_spots()
 	_update_hint()
 	_update_stats()
@@ -208,20 +256,26 @@ func _setup_ui() -> void:
 
 	var top_panel: ColorRect = ColorRect.new()
 	top_panel.position = Vector2(0.0, 0.0)
-	top_panel.size = Vector2(WORLD_SIZE.x, 64.0)
+	top_panel.size = Vector2(WORLD_SIZE.x, 72.0)
 	top_panel.color = Color(0.10, 0.16, 0.11, 0.84)
 	top_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	canvas_layer.add_child(top_panel)
 
 	stats_label = Label.new()
-	stats_label.position = Vector2(18.0, 14.0)
-	stats_label.size = Vector2(820.0, 30.0)
+	stats_label.position = Vector2(18.0, 10.0)
+	stats_label.size = Vector2(820.0, 22.0)
 	stats_label.modulate = Color8(240, 236, 214)
 	top_panel.add_child(stats_label)
 
+	farm_status_label = Label.new()
+	farm_status_label.position = Vector2(18.0, 38.0)
+	farm_status_label.size = Vector2(820.0, 22.0)
+	farm_status_label.modulate = Color8(190, 214, 191)
+	top_panel.add_child(farm_status_label)
+
 	banner_label = Label.new()
-	banner_label.position = Vector2(852.0, 14.0)
-	banner_label.size = Vector2(388.0, 30.0)
+	banner_label.position = Vector2(852.0, 22.0)
+	banner_label.size = Vector2(388.0, 24.0)
 	banner_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	banner_label.modulate = Color8(255, 203, 120)
 	top_panel.add_child(banner_label)
@@ -518,6 +572,19 @@ func _spawn_field_signal() -> void:
 	_update_field_signal_state(0, false)
 
 
+func _spawn_farm_structures() -> void:
+	farm_structures.clear()
+	for structure_id in FARM_STRUCTURE_ORDER:
+		var structure_data: Dictionary = FARM_STRUCTURE_DEFS[structure_id]
+		var structure: Node2D = FARM_STRUCTURE_SCENE.instantiate() as Node2D
+		structure.position = structure_data["position"]
+		structure.configure(structure_id, String(structure_data["name"]), String(structure_data["type"]), int(structure_data["health"]))
+		structure.damaged.connect(_on_farm_structure_damaged)
+		structure.destroyed.connect(_on_farm_structure_destroyed)
+		add_child(structure)
+		farm_structures[structure_id] = structure
+
+
 func _spawn_build_spots() -> void:
 	var build_positions: Array[Vector2] = [
 		Vector2(430.0, 548.0),
@@ -543,6 +610,56 @@ func _current_weapon_name() -> String:
 	if current_weapon_id == WEAPON_SCRAP_BLASTER:
 		return "Blaster"
 	return "Nailgun"
+
+
+func _farm_structure_by_id(structure_id: String) -> Node2D:
+	if not farm_structures.has(structure_id):
+		return null
+
+	var structure: Node2D = farm_structures[structure_id]
+	if structure == null or not is_instance_valid(structure):
+		return null
+	return structure
+
+
+func _has_intact_structure(structure_id: String) -> bool:
+	var structure: Node2D = _farm_structure_by_id(structure_id)
+	return structure != null and not structure.is_destroyed()
+
+
+func _structure_target_position(structure_id: String) -> Vector2:
+	var structure: Node2D = _farm_structure_by_id(structure_id)
+	if structure != null:
+		return structure.global_position
+	if FARM_STRUCTURE_DEFS.has(structure_id):
+		return FARM_STRUCTURE_DEFS[structure_id]["position"]
+	return FARMHOUSE_POS
+
+
+func _structure_display_name(structure_id: String) -> String:
+	if FARM_STRUCTURE_DEFS.has(structure_id):
+		return String(FARM_STRUCTURE_DEFS[structure_id]["name"])
+	return "farm structure"
+
+
+func _effective_turret_fire_interval() -> float:
+	var effective_interval := turret_fire_interval
+	if not _has_intact_structure("power_shed"):
+		effective_interval *= POWER_SHED_FIRE_PENALTY
+	return effective_interval
+
+
+func _effective_shock_post_fire_interval() -> float:
+	var effective_interval := shock_post_fire_interval
+	if not _has_intact_structure("power_shed"):
+		effective_interval *= POWER_SHED_FIRE_PENALTY
+	return effective_interval
+
+
+func _farmhouse_damage_bonus() -> int:
+	if not _has_intact_structure("silo"):
+		return SILO_DAMAGE_PENALTY
+	return 0
 
 
 func _refresh_player_weapon() -> void:
@@ -623,7 +740,7 @@ func _show_briefing_for_wave(wave_index: int, transition_text: String = "") -> v
 	patch_panel.visible = false
 	get_tree().paused = true
 	banner_label.text = banner_default
-	_update_field_signal_state(wave, bool(wave_data.get("drill_site", false)))
+	_update_field_signal_state(wave, bool(wave_data.get("drill_site", false)) or wave_data.has("relay_trigger_spawned"))
 	_update_hint()
 	_update_stats()
 
@@ -637,7 +754,7 @@ func _compose_briefing_text(wave_data: Dictionary, transition_text: String) -> S
 
 
 func _on_briefing_continue_pressed() -> void:
-	if mission_complete:
+	if mission_complete or game_over:
 		get_tree().paused = false
 		get_tree().reload_current_scene()
 		return
@@ -655,12 +772,16 @@ func _start_wave(wave_index: int) -> void:
 	current_wave_spawn_interval = float(wave_data["spawn_interval"])
 	current_wave_start_delay = float(wave_data["start_delay"])
 	current_wave_spawn_mode = String(wave_data["spawn_mode"])
-	current_objective_text = String(wave_data["objective"])
+	base_wave_objective_text = String(wave_data["objective"])
+	current_objective_text = base_wave_objective_text
 	wave_total_spawns = int(wave_data["spawn_count"])
 	wave_drillers_remaining = int(wave_data["driller_count"])
 	wave_harriers_remaining = int(wave_data["harrier_count"])
 	wave_spawned = 0
 	active_aliens = 0
+	relay_spawned_for_wave = false
+	structure_raid_pool = _build_structure_raid_pool(wave_data)
+	structure_raid_notice_sent = false
 	_spawn_wave_objectives(wave_data)
 	banner_default = _story_text_for_wave(wave)
 	_set_banner(banner_default, 3.0)
@@ -687,12 +808,19 @@ func _spawn_alien() -> void:
 	var spawn_position: Vector2 = _pick_spawn_position(current_wave_spawn_mode)
 	var goal_position: Vector2 = FARMHOUSE_POS + Vector2(randf_range(-92.0, 92.0), randf_range(-30.0, 24.0))
 	var targets_drill_site := false
-	if enemy_kind == "driller" and _has_live_drill_site():
+	var target_structure_id := ""
+	if enemy_kind != "driller":
+		target_structure_id = _dequeue_structure_raid_target()
+		if target_structure_id != "":
+			goal_position = _structure_target_position(target_structure_id)
+			_announce_structure_raid(target_structure_id)
+	elif enemy_kind == "driller" and _has_live_drill_site():
 		goal_position = current_drill_site.global_position
 		targets_drill_site = true
-	alien.configure(spawn_position, goal_position, wave, enemy_kind, targets_drill_site)
+	alien.configure(spawn_position, goal_position, wave, enemy_kind, targets_drill_site, target_structure_id)
 	alien.destroyed.connect(_on_alien_destroyed)
 	alien.farmhouse_hit.connect(_on_alien_farmhouse_hit)
+	alien.structure_hit.connect(_on_alien_structure_hit)
 	alien.drill_site_reached.connect(_on_alien_drill_site_reached)
 	alien.ranged_attack.connect(_on_alien_ranged_attack)
 	alien.damaged.connect(_on_alien_damaged)
@@ -707,11 +835,13 @@ func _spawn_alien() -> void:
 				_play_positional_sfx(SFX_ALIEN_CHITTER_IDLE, spawn_position, -20.0, 0.98, 1.08)
 	wave_spawned += 1
 	active_aliens += 1
+	_maybe_spawn_midwave_objective()
 	_update_stats()
 
 
 func _spawn_wave_objectives(wave_data: Dictionary) -> void:
 	current_drill_site = null
+	current_signal_relay = null
 	if not bool(wave_data.get("drill_site", false)):
 		return
 
@@ -720,9 +850,71 @@ func _spawn_wave_objectives(wave_data: Dictionary) -> void:
 	drill_rig.configure(int(wave_data["drill_health"]), float(wave_data["drill_rate"]), 4 + wave)
 	drill_rig.destroyed.connect(_on_drill_site_destroyed)
 	drill_rig.breached.connect(_on_drill_site_breached)
+	drill_rig.damaged.connect(_on_objective_damaged)
 	add_child(drill_rig)
 	current_drill_site = drill_rig
 	active_aliens += 1
+
+
+func _build_structure_raid_pool(wave_data: Dictionary) -> Array[String]:
+	var raid_pool: Array[String] = []
+	for raid_entry in wave_data.get("structure_raids", []):
+		var structure_id: String = String(raid_entry.get("id", ""))
+		var raid_count: int = int(raid_entry.get("count", 0))
+		for _raid_index in range(raid_count):
+			raid_pool.append(structure_id)
+	return raid_pool
+
+
+func _dequeue_structure_raid_target() -> String:
+	while not structure_raid_pool.is_empty():
+		var structure_id: String = structure_raid_pool.pop_front()
+		if _has_intact_structure(structure_id):
+			return structure_id
+	return ""
+
+
+func _announce_structure_raid(structure_id: String) -> void:
+	if structure_raid_notice_sent:
+		return
+
+	structure_raid_notice_sent = true
+	_set_banner("Raiders angle toward the %s." % _structure_display_name(structure_id), 1.8)
+
+
+func _maybe_spawn_midwave_objective() -> void:
+	if relay_spawned_for_wave or _has_live_signal_relay():
+		return
+	if current_wave_index < 0 or current_wave_index >= ACT_ONE_WAVES.size():
+		return
+
+	var wave_data: Dictionary = ACT_ONE_WAVES[current_wave_index]
+	if not wave_data.has("relay_trigger_spawned"):
+		return
+	if wave_spawned < int(wave_data["relay_trigger_spawned"]):
+		return
+
+	relay_spawned_for_wave = true
+	var relay: StaticBody2D = SIGNAL_RELAY_SCENE.instantiate() as StaticBody2D
+	relay.position = wave_data.get("relay_position", DRILL_SITE_POS + Vector2(0.0, -92.0))
+	relay.configure(
+		int(wave_data.get("relay_health", 8)),
+		float(wave_data.get("relay_interval", 5.2)),
+		float(wave_data.get("relay_boost_multiplier", 1.3)),
+		float(wave_data.get("relay_boost_duration", 3.2)),
+		float(wave_data.get("relay_drill_boost", 0.0)),
+		int(wave_data.get("relay_scrap", 5))
+	)
+	relay.destroyed.connect(_on_signal_relay_destroyed)
+	relay.pulsed.connect(_on_signal_relay_pulsed)
+	relay.damaged.connect(_on_objective_damaged)
+	add_child(relay)
+	current_signal_relay = relay
+	active_aliens += 1
+	_refresh_current_objective_text()
+	_set_banner("An alien relay locks onto the field. Smash it before the next pulse.", 2.4)
+	_update_field_signal_state(wave, true)
+	_update_hint()
 
 
 func _pick_enemy_kind() -> String:
@@ -760,6 +952,22 @@ func _pick_enemy_kind() -> String:
 
 func _has_live_drill_site() -> bool:
 	return current_drill_site != null and is_instance_valid(current_drill_site)
+
+
+func _has_live_signal_relay() -> bool:
+	return current_signal_relay != null and is_instance_valid(current_signal_relay)
+
+
+func _refresh_current_objective_text() -> void:
+	if not wave_active:
+		return
+	if _has_live_signal_relay():
+		if _has_live_drill_site():
+			current_objective_text = "Destroy the signal relay before it accelerates the command rig."
+		else:
+			current_objective_text = "Destroy the signal relay before it boosts the whole lane again."
+		return
+	current_objective_text = base_wave_objective_text
 
 
 func _pick_spawn_position(spawn_mode: String) -> Vector2:
@@ -873,7 +1081,67 @@ func _upgrade_options_for_wave(next_wave_number: int) -> Array[Dictionary]:
 				{"id":"hotshot_feed","name":"Hotshot Feed","description":"Make Eli's weapon faster and meaner."},
 				_path_upgrade_option_for_wave_six()
 			]
+	if next_wave_number >= 3:
+		var structure_option: Dictionary = _structure_repair_option()
+		if not structure_option.is_empty() and options.size() >= 3:
+			options[1] = structure_option
 	return options
+
+
+func _structure_repair_option() -> Dictionary:
+	var structure_id := _priority_structure_to_repair()
+	if structure_id == "":
+		return {}
+
+	var structure: Node2D = _farm_structure_by_id(structure_id)
+	var rebuild: bool = structure != null and structure.is_destroyed()
+	match structure_id:
+		"power_shed":
+			if rebuild:
+				return {"id":"repair_power_shed","name":"Spare Generator","description":"Rebuild the power shed and restore defense speed."}
+			return {"id":"repair_power_shed","name":"Shed Repairs","description":"Repair the power shed back to full output."}
+		"silo":
+			if rebuild:
+				return {"id":"repair_silo","name":"Silo Rebuild","description":"Raise the silo again so the farmhouse stops taking bonus damage."}
+			return {"id":"repair_silo","name":"Silo Bracing","description":"Patch the silo back to full strength before the next hit lands."}
+		"barn":
+			if rebuild:
+				return {"id":"repair_barn","name":"Barn Repair Crew","description":"Rebuild the barn workshop and restore the scrap reserve."}
+			return {"id":"repair_barn","name":"Barn Repairs","description":"Fix the barn workshop before the reserve takes more damage."}
+		_:
+			return {}
+
+
+func _priority_structure_to_repair() -> String:
+	for structure_id in FARM_STRUCTURE_REPAIR_PRIORITY:
+		var structure: Node2D = _farm_structure_by_id(structure_id)
+		if structure == null:
+			continue
+		if structure.is_destroyed():
+			return structure_id
+
+	var chosen_structure_id := ""
+	var lowest_health_ratio := 1.01
+	for structure_id in FARM_STRUCTURE_REPAIR_PRIORITY:
+		var structure: Node2D = _farm_structure_by_id(structure_id)
+		if structure == null:
+			continue
+		var health_ratio: float = structure.get_health_ratio()
+		if health_ratio < 1.0 and health_ratio < lowest_health_ratio:
+			lowest_health_ratio = health_ratio
+			chosen_structure_id = structure_id
+	return chosen_structure_id
+
+
+func _restore_farm_structure(structure_id: String) -> void:
+	var structure: Node2D = _farm_structure_by_id(structure_id)
+	if structure == null:
+		return
+
+	structure.restore_full()
+	if structure_id == "power_shed":
+		_refresh_turret_stats()
+	_update_stats()
 
 
 func _path_upgrade_option_for_wave_four() -> Dictionary:
@@ -1010,6 +1278,15 @@ func _apply_invention_upgrade(upgrade_id: String) -> String:
 		"coil_molds":
 			turret_cost = maxi(4, turret_cost - 1)
 			return "Coil Molds finished. New turrets cost %d scrap." % turret_cost
+		"repair_barn":
+			_restore_farm_structure("barn")
+			return "Barn repair crew finishes the workshop. The scrap reserve is back online."
+		"repair_power_shed":
+			_restore_farm_structure("power_shed")
+			return "Spare dynamos are wired in. The power shed is back at full output."
+		"repair_silo":
+			_restore_farm_structure("silo")
+			return "The silo is braced and standing again. The farmhouse loses the bonus damage risk."
 		"boot_springs":
 			player_move_speed += 24.0
 			player.set_move_speed(player_move_speed)
@@ -1096,31 +1373,31 @@ func _desired_patch_rank_for_wave(next_wave_number: int) -> int:
 func _between_wave_text_for_wave(next_wave_number: int) -> String:
 	match next_wave_number:
 		2:
-			return "Eli kicks apart the first saucer hulls, then crouches beside Patch to decide what the dog should become."
+			return "Eli kicks apart the first saucer hulls, checks the power shed wiring, then crouches beside Patch to decide what the dog should become."
 		3:
 			return "The barn lights burn hot while Eli rewires farm junk into weapons. Out in the dark, the aliens start sending real drill teams."
 		4:
 			match patch_path:
 				PatchPath.SCRAP:
-					return "Patch starts dragging cleaner cores out of the wreck pile while the buried signal starts pulsing under the north field and harriers cut overhead."
+					return "Patch starts dragging cleaner cores out of the wreck pile while the buried signal starts pulsing under the north field and scouts start feeling out the barn workshop."
 				PatchPath.GUARD:
-					return "Patch keeps pacing the lane, waiting to cut off the next rush while harriers start firing from above the rows."
+					return "Patch keeps pacing the lane, waiting to cut off the next rush while harriers start firing from above the rows and raiders edge toward the barn."
 				PatchPath.SCOUT:
-					return "Patch keeps circling one patch of trampled corn until Eli notices the field markers lining up under the first harrier screen."
+					return "Patch keeps circling one patch of trampled corn until Eli notices the field markers lining up under the first harrier screen and the barn coming into the attack lane."
 				_:
-					return "Fresh crop circles point to something buried under the north field while harriers rise over the corn."
+					return "Fresh crop circles point to something buried under the north field while harriers rise over the corn and the barn workshop comes into range."
 		5:
-			return "The buried signal is fully awake now. Harriers start ranging the farmhouse while heavier craft vector toward the lane."
+			return "The buried signal is fully awake now. Another relay drops near the silo while harriers start ranging the farmhouse and split raiders push toward the silo and power shed."
 		6:
 			match patch_path:
 				PatchPath.SCRAP:
-					return "The salvage pile behind the barn has become a real workshop, and Patch is still dragging in usable alloy."
+					return "The salvage pile behind the barn has become a real workshop, and Patch is still dragging in usable alloy while the final relay, command rig, and structure raids line up over the field."
 				PatchPath.GUARD:
-					return "Patch's bark rolls across the lane like thunder. Even the bigger saucers hesitate when he squares up."
+					return "Patch's bark rolls across the lane like thunder. Even the bigger saucers hesitate when he squares up against the final relay, command rig, and the last structure raid."
 				PatchPath.SCOUT:
-					return "Patch digs up one last sealed cache near the tractor shed, and Eli folds it into the farm's last defenses."
+					return "Patch digs up one last sealed cache near the tractor shed, and Eli folds it into the farm's last defenses while the final relay lights the field and raiders break for every standing building."
 				_:
-					return "The silo throws long shadows over the field while the final rush lines up in the sky."
+					return "The silo throws long shadows over the field while a final relay, command rig, and structure raid line up the last rush in the sky."
 		_:
 			return ""
 
@@ -1128,10 +1405,10 @@ func _between_wave_text_for_wave(next_wave_number: int) -> String:
 func _refresh_turret_stats() -> void:
 	for node in get_tree().get_nodes_in_group("turrets"):
 		if node.has_method("set_stats"):
-			node.set_stats(turret_fire_interval, turret_damage)
+			node.set_stats(_effective_turret_fire_interval(), turret_damage)
 	for node in get_tree().get_nodes_in_group("shock_posts"):
 		if node.has_method("set_stats"):
-			node.set_stats(shock_post_fire_interval, shock_post_damage, shock_post_stun_duration)
+			node.set_stats(_effective_shock_post_fire_interval(), shock_post_damage, shock_post_stun_duration)
 
 
 func _spawn_bullet(origin: Vector2, direction: Vector2, speed: float, damage: int, lifetime: float = 1.6, radius: float = 6.0, core_color: Color = Color8(255, 241, 196), tail_color: Color = Color8(255, 185, 71)) -> void:
@@ -1178,7 +1455,7 @@ func _on_build_requested(spot) -> void:
 	if selected_build_type == BUILD_SHOCK_POST:
 		var shock_post: Node2D = SHOCK_POST_SCENE.instantiate() as Node2D
 		shock_post.position = spot.position
-		shock_post.configure(shock_post_fire_interval, shock_post_damage, shock_post_stun_duration)
+		shock_post.configure(_effective_shock_post_fire_interval(), shock_post_damage, shock_post_stun_duration)
 		shock_post.discharged.connect(_on_shock_post_discharged)
 		add_child(shock_post)
 		_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, spot.global_position, -10.0, 0.88, 0.96)
@@ -1186,7 +1463,7 @@ func _on_build_requested(spot) -> void:
 	else:
 		var turret: Node2D = TURRET_SCENE.instantiate() as Node2D
 		turret.position = spot.position
-		turret.configure(BULLET_SCENE, turret_fire_interval, turret_damage)
+		turret.configure(BULLET_SCENE, _effective_turret_fire_interval(), turret_damage)
 		turret.fired_shot.connect(_on_turret_fired)
 		add_child(turret)
 		_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, spot.global_position, -12.0, 1.00, 1.06)
@@ -1228,7 +1505,19 @@ func _on_alien_drill_site_reached(progress_boost: float) -> void:
 	active_aliens = maxi(0, active_aliens - 1)
 	if _has_live_drill_site():
 		current_drill_site.boost_progress(progress_boost)
+		if game_over:
+			return
 		_set_banner("A driller fed the north-field rig.", 1.6)
+	_update_stats()
+	_check_wave_completion()
+
+
+func _on_alien_structure_hit(structure_id: String, damage: int) -> void:
+	if game_over:
+		return
+
+	active_aliens = maxi(0, active_aliens - 1)
+	_damage_farm_structure(structure_id, damage)
 	_update_stats()
 	_check_wave_completion()
 
@@ -1244,12 +1533,12 @@ func _on_alien_damaged(world_position: Vector2, enemy_kind: String) -> void:
 	_play_positional_sfx(SFX_ALIEN_HURT, world_position, volume_db, pitch_min, pitch_max)
 
 
-func _on_alien_ranged_attack(origin: Vector2, target_position: Vector2, damage: int, projectile_speed: float) -> void:
+func _on_alien_ranged_attack(origin: Vector2, target_position: Vector2, damage: int, projectile_speed: float, target_structure_id: String) -> void:
 	if game_over or mission_complete:
 		return
 
 	var enemy_bolt: Area2D = ENEMY_BOLT_SCENE.instantiate() as Area2D
-	enemy_bolt.configure(origin, target_position, projectile_speed, damage)
+	enemy_bolt.configure(origin, target_position, projectile_speed, damage, target_structure_id)
 	enemy_bolt.impacted.connect(_on_enemy_bolt_impacted)
 	add_child(enemy_bolt)
 	_play_positional_sfx(SFX_WEAPON_ROCKET_LAUNCH, origin, -13.0, 0.92, 1.00)
@@ -1276,7 +1565,7 @@ func _on_alien_farmhouse_hit(damage: int) -> void:
 		return
 
 	active_aliens = maxi(0, active_aliens - 1)
-	base_health -= damage
+	base_health -= damage + _farmhouse_damage_bonus()
 	if base_health <= 0:
 		_trigger_game_over("The farmhouse is gone. Reset and hold the line again.")
 	else:
@@ -1286,17 +1575,65 @@ func _on_alien_farmhouse_hit(damage: int) -> void:
 		_check_wave_completion()
 
 
-func _on_enemy_bolt_impacted(damage: int) -> void:
+func _on_enemy_bolt_impacted(damage: int, target_structure_id: String) -> void:
 	if game_over:
 		return
 
-	base_health -= damage
+	if target_structure_id != "":
+		_damage_farm_structure(target_structure_id, damage, true)
+		return
+
+	base_health -= damage + _farmhouse_damage_bonus()
 	if base_health <= 0:
 		_trigger_game_over("Harrier fire tore the farmhouse apart. Reset and hold the line again.")
 	else:
 		_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, FARMHOUSE_POS, -16.0, 0.90, 0.98)
 		_set_banner("A harrier bolt slammed into the farmhouse.", 1.4)
 		_update_stats()
+
+
+func _damage_farm_structure(structure_id: String, damage: int, _ranged_hit: bool = false) -> void:
+	var structure: Node2D = _farm_structure_by_id(structure_id)
+	if structure == null or structure.is_destroyed():
+		return
+
+	structure.take_damage(damage)
+
+
+func _on_farm_structure_damaged(structure_id: String, world_position: Vector2) -> void:
+	if game_over:
+		return
+
+	_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, world_position, -18.0, 0.92, 1.00)
+	_set_banner("%s takes a hit." % _structure_display_name(structure_id), 1.3)
+	_update_stats()
+
+
+func _on_farm_structure_destroyed(structure_id: String, world_position: Vector2) -> void:
+	if game_over:
+		return
+
+	_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, world_position, -12.0, 0.84, 0.94)
+	match structure_id:
+		"barn":
+			var lost_scrap := mini(scrap, 4)
+			scrap = maxi(0, scrap - lost_scrap)
+			_set_banner("Barn workshop lost. Eli drops %d scrap and the reserve is gone." % lost_scrap, 2.2)
+		"power_shed":
+			_refresh_turret_stats()
+			_set_banner("Power shed wrecked. Farm defenses cycle slower now.", 2.2)
+		"silo":
+			_set_banner("Silo shattered. Every farmhouse hit will land harder.", 2.2)
+		_:
+			_set_banner("%s lost." % _structure_display_name(structure_id), 2.0)
+	_update_hint()
+	_update_stats()
+
+
+func _on_objective_damaged(_world_position: Vector2) -> void:
+	if game_over:
+		return
+	_update_stats()
 
 
 func _on_drill_site_destroyed(scrap_value: int, _world_position: Vector2) -> void:
@@ -1308,7 +1645,9 @@ func _on_drill_site_destroyed(scrap_value: int, _world_position: Vector2) -> voi
 	scrap += scrap_value
 	_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, _world_position, -8.0, 0.84, 0.92)
 	_set_banner("North-field drill rig destroyed.", 2.0)
+	_refresh_current_objective_text()
 	_update_field_signal_state(wave, wave >= 4)
+	_update_hint()
 	_update_stats()
 	_check_wave_completion()
 
@@ -1323,6 +1662,50 @@ func _on_drill_site_breached() -> void:
 	_trigger_game_over("North field breached. The aliens drilled into what was buried below.")
 
 
+func _on_signal_relay_pulsed(boost_multiplier: float, boost_duration: float, drill_boost: float) -> void:
+	if game_over or mission_complete or not _has_live_signal_relay():
+		return
+
+	var boosted_enemies := 0
+	for node in get_tree().get_nodes_in_group("aliens"):
+		if node == current_signal_relay:
+			continue
+		if node.has_method("apply_signal_boost"):
+			node.apply_signal_boost(boost_duration, boost_multiplier)
+			boosted_enemies += 1
+
+	var boosted_drill := false
+	if drill_boost > 0.0 and _has_live_drill_site():
+		current_drill_site.boost_progress(drill_boost)
+		if game_over:
+			return
+		boosted_drill = true
+
+	_play_positional_sfx(SFX_ALIEN_CHITTER_IDLE, current_signal_relay.global_position, -14.0, 0.82, 0.90)
+	if boosted_enemies > 0 and boosted_drill:
+		_set_banner("Relay pulse drives the lane and feeds the command rig.", 1.7)
+	elif boosted_enemies > 0:
+		_set_banner("Relay pulse drives the invaders into a frenzy.", 1.6)
+	elif boosted_drill:
+		_set_banner("Relay pulse surges into the north-field rig.", 1.6)
+
+
+func _on_signal_relay_destroyed(scrap_value: int, _world_position: Vector2) -> void:
+	if game_over:
+		return
+
+	active_aliens = maxi(0, active_aliens - 1)
+	current_signal_relay = null
+	scrap += scrap_value
+	_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, _world_position, -9.0, 0.82, 0.90)
+	_refresh_current_objective_text()
+	_set_banner("Signal relay destroyed. The lane drops out of sync.", 1.9)
+	_update_field_signal_state(wave, _has_live_drill_site() or wave >= 4)
+	_update_hint()
+	_update_stats()
+	_check_wave_completion()
+
+
 func _check_wave_completion() -> void:
 	if not wave_active or game_over:
 		return
@@ -1332,6 +1715,7 @@ func _check_wave_completion() -> void:
 	wave_active = false
 	spawn_timer.stop()
 	current_objective_text = "Wave %d secure. Eli and Patch reset the fence line." % wave
+	var farm_transition_text := _wave_clear_farm_text()
 	_update_hint()
 	_update_stats()
 
@@ -1345,6 +1729,11 @@ func _check_wave_completion() -> void:
 
 	var next_wave_index: int = current_wave_index + 1
 	var transition_text: String = _prepare_transition_for_wave(next_wave_index + 1)
+	if farm_transition_text != "":
+		if transition_text != "":
+			transition_text = farm_transition_text + "\n\n" + transition_text
+		else:
+			transition_text = farm_transition_text
 	_show_briefing_for_wave(next_wave_index, transition_text)
 
 
@@ -1387,14 +1776,17 @@ func _trigger_game_over(reason: String) -> void:
 	base_health = 0
 	spawn_timer.stop()
 	banner_timer.stop()
-	briefing_panel.visible = false
 	upgrade_panel.visible = false
-	if patch_panel.visible:
-		patch_panel.visible = false
-	get_tree().paused = false
-	banner_default = "Farm overrun. Press R to restart the defense."
+	patch_panel.visible = false
+	banner_default = "Farm overrun. Miller Farm falls unless Eli starts over."
 	banner_label.text = banner_default
 	current_objective_text = reason
+	briefing_title_label.text = "Farm Overrun"
+	briefing_body_label.text = "%s\n\nThe farmhouse is lost. Eli and Patch have to reset the defense and try the night again." % reason
+	briefing_footer_label.text = "Use the button below to restart. R also restarts the run."
+	briefing_continue_button.text = "Restart Defense"
+	briefing_panel.visible = true
+	get_tree().paused = true
 	_update_field_signal_state(wave, true)
 	_update_hint()
 	_update_stats()
@@ -1410,9 +1802,26 @@ func _restore_banner() -> void:
 	banner_label.text = banner_default
 
 
+func _wave_clear_farm_text() -> String:
+	if current_wave_index <= 0 or current_wave_index >= ACT_ONE_WAVES.size() - 1:
+		return ""
+	if not _has_intact_structure("barn"):
+		return ""
+
+	scrap += BARN_SURVIVAL_BONUS
+	return "The barn workshop stays intact, so Eli pulls %d scrap from the reserve before the next wave." % BARN_SURVIVAL_BONUS
+
+
 func _update_stats() -> void:
 	var threats_remaining: int = _threats_remaining()
 	stats_label.text = "Scrap %02d  Base %02d  Wave %02d/%02d  Threat %02d  Gun %s  Patch %s" % [scrap, base_health, maxi(1, wave), ACT_ONE_WAVES.size(), threats_remaining, _current_weapon_name(), _patch_summary()]
+	var farm_text := _farm_status_text()
+	var objective_status := _objective_status_text()
+	if objective_status != "":
+		if farm_text != "":
+			farm_text += "  |  "
+		farm_text += objective_status
+	farm_status_label.text = farm_text
 
 
 func _threats_remaining() -> int:
@@ -1421,13 +1830,55 @@ func _threats_remaining() -> int:
 	return active_aliens + maxi(0, wave_total_spawns - wave_spawned)
 
 
+func _objective_status_text() -> String:
+	var status_text := ""
+	if _has_live_drill_site():
+		status_text = "Rig %02d/%02d %02d%%" % [
+			current_drill_site.get_health(),
+			current_drill_site.get_max_health(),
+			int(round(current_drill_site.get_progress_ratio() * 100.0))
+		]
+	if _has_live_signal_relay():
+		var relay_text := "Relay %02d/%02d" % [
+			current_signal_relay.get_health(),
+			current_signal_relay.get_max_health()
+		]
+		if status_text != "":
+			status_text += "  "
+		status_text += relay_text
+	return status_text
+
+
+func _farm_status_text() -> String:
+	var status_bits: Array[String] = []
+	for structure_id in FARM_STRUCTURE_ORDER:
+		var structure: Node2D = _farm_structure_by_id(structure_id)
+		if structure == null:
+			continue
+
+		var prefix := "Barn"
+		match structure_id:
+			"power_shed":
+				prefix = "Shed"
+			"silo":
+				prefix = "Silo"
+		if structure.is_destroyed():
+			status_bits.append("%s OUT" % prefix)
+		else:
+			status_bits.append("%s %d/%d" % [prefix, structure.get_health(), structure.get_max_health()])
+
+	if status_bits.is_empty():
+		return ""
+	return "Farm " + "  ".join(status_bits)
+
+
 func _update_hint() -> void:
 	if mission_complete:
 		hint_label.text = "Act 1 complete. Press R or use the panel to restart the defense."
 		return
 
 	if game_over:
-		hint_label.text = "Restart with R, then get Eli and Patch back on the fence line."
+		hint_label.text = "Farm overrun. Restart with R or use the restart panel."
 		return
 
 	var hint_text := "Objective: %s   WASD/Arrows Move   Mouse/Space Fire" % current_objective_text
@@ -1472,37 +1923,37 @@ func _story_text_for_wave(current_wave: int) -> String:
 		2:
 			match patch_path:
 				PatchPath.SCRAP:
-					return "Wave 2: Patch starts pulling clean alloy while the first driller brute hits the fence."
+					return "Wave 2: Patch starts pulling clean alloy while raiders angle toward the power shed."
 				PatchPath.GUARD:
-					return "Wave 2: Patch locks onto the fence line as the first driller brute lumbers in."
+					return "Wave 2: Patch locks onto the fence line as raiders test the power shed."
 				PatchPath.SCOUT:
-					return "Wave 2: Patch starts sniffing around the north field markers while a driller brute tests the lane."
+					return "Wave 2: Patch starts sniffing around the north field markers while a driller brute and power-shed raiders test the lane."
 				_:
-					return "Wave 2: Eli decides what kind of war dog Patch needs to become."
+					return "Wave 2: Eli decides what kind of war dog Patch needs to become while the power shed draws fire."
 		3:
 			return "Wave 3: The first north-field drill rig locks into the soil."
 		4:
 			match patch_path:
 				PatchPath.SCOUT:
-					return "Wave 4: Patch tracks the crop circles while harriers start screening the buried signal."
+					return "Wave 4: Patch tracks the crop circles while a relay mast and barn raiders screen the buried signal."
 				PatchPath.SCRAP:
-					return "Wave 4: Eli and Patch turn the wreck pile into a real war chest under the first harrier fire."
+					return "Wave 4: Eli and Patch turn the wreck pile into a real war chest under the first relay pulse and the raid on the barn."
 				PatchPath.GUARD:
-					return "Wave 4: Patch starts controlling the lane while harriers fire from above the rows."
+					return "Wave 4: Patch starts controlling the lane while a relay mast and barn raiders cut over the rows."
 				_:
-					return "Wave 4: Fresh crop circles point to something buried under the north field."
+					return "Wave 4: Fresh crop circles point to a relay beacon while the barn workshop comes under attack."
 		5:
-			return "Wave 5: Harriers start ranging the farmhouse while the invaders close on the buried signal."
+			return "Wave 5: Another relay drives the harriers while split raiders close on the silo and power shed."
 		6:
 			match patch_path:
 				PatchPath.SCOUT:
-					return "Wave 6: Patch turns up sealed alien gear while the command rig drills for the signal."
+					return "Wave 6: Patch turns up sealed alien gear while the command rig, final relay, and structure raid drill for the heart of the farm."
 				PatchPath.SCRAP:
-					return "Wave 6: The salvage pile grows into a full workshop as the command rig bores into the field."
+					return "Wave 6: The salvage pile grows into a full workshop as the command rig, final relay, and structure raid bore into the farm."
 				PatchPath.GUARD:
-					return "Wave 6: Patch's bark rolls across the farm while the command rig pounds the field."
+					return "Wave 6: Patch's bark rolls across the farm while the command rig, final relay, and structure raid pound the field."
 				_:
-					return "Wave 6: A command rig hammers the field while Eli turns the tractor shed into a war workshop."
+					return "Wave 6: A command rig, final relay, and structure raid hammer the field while Eli turns the tractor shed into a war workshop."
 		_:
 			return "The field stays loud with engines and falling metal."
 

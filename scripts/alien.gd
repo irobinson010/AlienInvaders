@@ -2,8 +2,9 @@ extends CharacterBody2D
 
 signal destroyed(scrap_value: int, world_position: Vector2)
 signal farmhouse_hit(damage: int)
+signal structure_hit(structure_id: String, damage: int)
 signal drill_site_reached(progress_boost: float)
-signal ranged_attack(origin: Vector2, target_position: Vector2, damage: int, projectile_speed: float)
+signal ranged_attack(origin: Vector2, target_position: Vector2, damage: int, projectile_speed: float, target_structure_id: String)
 signal damaged(world_position: Vector2, enemy_kind: String)
 
 const KIND_SCOUT := "scout"
@@ -25,6 +26,9 @@ var attack_range := 0.0
 var attack_interval := 1.45
 var attack_cooldown := 0.0
 var projectile_speed := 360.0
+var signal_boost_timer := 0.0
+var signal_boost_multiplier := 1.0
+var target_structure_id := ""
 
 
 func _ready() -> void:
@@ -40,15 +44,18 @@ func _ready() -> void:
 	add_child(collision)
 
 
-func configure(spawn_position: Vector2, goal_position: Vector2, current_wave: int, new_enemy_kind: String = KIND_SCOUT, new_targets_drill_site: bool = false) -> void:
+func configure(spawn_position: Vector2, goal_position: Vector2, current_wave: int, new_enemy_kind: String = KIND_SCOUT, new_targets_drill_site: bool = false, new_target_structure_id: String = "") -> void:
 	global_position = spawn_position
 	target_position = goal_position
 	enemy_kind = new_enemy_kind
 	targets_drill_site = new_targets_drill_site
+	target_structure_id = new_target_structure_id
 	attack_range = 0.0
 	attack_interval = 1.45
 	attack_cooldown = 0.0
 	projectile_speed = 360.0
+	signal_boost_timer = 0.0
+	signal_boost_multiplier = 1.0
 
 	match enemy_kind:
 		KIND_DRILLER:
@@ -81,18 +88,25 @@ func configure(spawn_position: Vector2, goal_position: Vector2, current_wave: in
 
 
 func _physics_process(delta: float) -> void:
+	var boost_expired := false
+	if signal_boost_timer > 0.0:
+		signal_boost_timer = maxf(0.0, signal_boost_timer - delta)
+		if signal_boost_timer <= 0.0:
+			signal_boost_multiplier = 1.0
+			boost_expired = true
+
 	if stun_timer > 0.0:
 		stun_timer = maxf(0.0, stun_timer - delta)
 		velocity = Vector2.ZERO
 		move_and_slide()
-		if not was_stunned or stun_timer <= 0.0:
+		if not was_stunned or stun_timer <= 0.0 or boost_expired:
 			was_stunned = stun_timer > 0.0
 			queue_redraw()
 		return
 
 	var offset := target_position - global_position
 	if enemy_kind == KIND_HARRIER and not targets_drill_site:
-		attack_cooldown = maxf(0.0, attack_cooldown - delta)
+		attack_cooldown = maxf(0.0, attack_cooldown - delta * signal_boost_multiplier)
 		if offset.length() <= attack_range:
 			velocity = Vector2.ZERO
 			rotation = offset.angle()
@@ -100,7 +114,7 @@ func _physics_process(delta: float) -> void:
 			if attack_cooldown <= 0.0:
 				attack_cooldown = attack_interval
 				var muzzle_position := global_position + offset.normalized() * (body_radius + 8.0)
-				ranged_attack.emit(muzzle_position, target_position, farmhouse_damage, projectile_speed)
+				ranged_attack.emit(muzzle_position, target_position, farmhouse_damage, projectile_speed, target_structure_id)
 			if was_stunned:
 				was_stunned = false
 				queue_redraw()
@@ -110,6 +124,8 @@ func _physics_process(delta: float) -> void:
 	if offset.length() <= contact_distance:
 		if targets_drill_site:
 			drill_site_reached.emit(drill_progress_boost)
+		elif target_structure_id != "":
+			structure_hit.emit(target_structure_id, farmhouse_damage)
 		else:
 			farmhouse_hit.emit(farmhouse_damage)
 		queue_free()
@@ -117,9 +133,9 @@ func _physics_process(delta: float) -> void:
 
 	var direction := offset.normalized()
 	rotation = direction.angle()
-	velocity = direction * speed
+	velocity = direction * speed * signal_boost_multiplier
 	move_and_slide()
-	if was_stunned:
+	if was_stunned or boost_expired:
 		was_stunned = false
 		queue_redraw()
 
@@ -138,6 +154,12 @@ func apply_stun(duration: float) -> void:
 	if not was_stunned:
 		was_stunned = true
 		queue_redraw()
+
+
+func apply_signal_boost(duration: float, multiplier: float) -> void:
+	signal_boost_timer = maxf(signal_boost_timer, duration)
+	signal_boost_multiplier = maxf(signal_boost_multiplier, multiplier)
+	queue_redraw()
 
 
 func _draw() -> void:
@@ -180,3 +202,6 @@ func _draw() -> void:
 	if stun_timer > 0.0:
 		draw_arc(Vector2.ZERO, 28.0, -0.6, 0.6, 18, Color8(145, 214, 255), 4.0, true)
 		draw_arc(Vector2.ZERO, 34.0, 2.54, 3.74, 18, Color8(145, 214, 255), 4.0, true)
+	if signal_boost_timer > 0.0:
+		draw_arc(Vector2.ZERO, body_radius + 12.0, -PI, PI, 28, Color8(203, 152, 255), 3.0, true)
+		draw_arc(Vector2.ZERO, body_radius + 18.0, -PI * 0.85, PI * 0.15, 24, Color8(126, 228, 255), 2.0, true)
