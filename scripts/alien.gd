@@ -11,6 +11,7 @@ const KIND_SCOUT := "scout"
 const KIND_DRILLER := "driller"
 const KIND_HARRIER := "harrier"
 const KIND_SHIELD := "shield_drone"
+const KIND_BURROWER := "burrower"
 
 var target_position := Vector2.ZERO
 var speed := 90.0
@@ -94,6 +95,13 @@ func configure(spawn_position: Vector2, goal_position: Vector2, current_wave: in
 			farmhouse_damage = 1
 			drill_progress_boost = 0.0
 			body_radius = 22.0
+		KIND_BURROWER:
+			speed = 102.0 + randf_range(0.0, 14.0 + float(current_wave) * 5.0)
+			health = 2 + int(floor(float(current_wave - 1) / 3.0))
+			scrap_value = 2 + int(floor(float(current_wave - 1) / 4.0))
+			farmhouse_damage = 2 if current_wave >= 6 else 1
+			drill_progress_boost = 0.0
+			body_radius = 18.0
 		_:
 			speed = 88.0 + randf_range(0.0, 28.0 + float(current_wave) * 8.0)
 			health = 1 + int(floor(float(current_wave - 1) / 3.0))
@@ -130,7 +138,7 @@ func _physics_process(delta: float) -> void:
 			queue_redraw()
 		return
 
-	if enemy_kind != KIND_HARRIER and not targets_drill_site:
+	if enemy_kind != KIND_HARRIER and enemy_kind != KIND_BURROWER and not targets_drill_site:
 		_update_barricade_target()
 
 	var offset := target_position - global_position
@@ -150,6 +158,8 @@ func _physics_process(delta: float) -> void:
 			return
 
 	var contact_distance: float = 36.0 if enemy_kind == KIND_DRILLER else 30.0
+	if enemy_kind == KIND_BURROWER:
+		contact_distance = 24.0
 	if offset.length() <= contact_distance:
 		if targets_drill_site:
 			drill_site_reached.emit(drill_progress_boost)
@@ -294,6 +304,14 @@ func _draw() -> void:
 			else:
 				draw_line(Vector2(14.0, -18.0), Vector2(34.0, -10.0), shield_color, 3.0, true)
 				draw_line(Vector2(16.0, 18.0), Vector2(36.0, 10.0), shield_color, 3.0, true)
+		KIND_BURROWER:
+			draw_circle(Vector2.ZERO, body_radius, Color8(115, 86, 60))
+			draw_circle(Vector2(0.0, 6.0), body_radius - 4.0, Color8(84, 58, 42))
+			draw_circle(Vector2.ZERO, 8.0, Color8(171, 255, 146))
+			draw_line(Vector2(-6.0, -4.0), Vector2(-18.0, -12.0), Color8(198, 184, 120), 3.0, true)
+			draw_line(Vector2(6.0, -4.0), Vector2(18.0, -12.0), Color8(198, 184, 120), 3.0, true)
+			draw_line(Vector2(-14.0, 10.0), Vector2(-26.0, 18.0), Color8(92, 68, 48), 4.0, true)
+			draw_line(Vector2(14.0, 10.0), Vector2(26.0, 18.0), Color8(92, 68, 48), 4.0, true)
 		_:
 			draw_circle(Vector2.ZERO, body_radius, Color8(129, 238, 126))
 			draw_circle(Vector2(-8.0, -4.0), 5.0, Color8(33, 42, 27))

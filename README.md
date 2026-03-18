@@ -20,11 +20,12 @@ The project currently includes:
 
 - A playable top-down farm defense prototype.
 - A start screen that lets the player choose `Auto`, `Desktop`, or `Touch` controls before the first wave.
+- A pause/settings menu for in-run resume, restart, control-mode switching, and music/SFX volume.
 - A 6-wave Act 1 mission flow with story briefings between waves.
 - Patch path selection after the first wave, with follow-up upgrades later in the act.
 - Placeable coil turrets, unlockable shock posts and barbed barricades, alien rushes, salvage collection, fail/restart flow, and an Act 1 completion state.
-- Workshop unlocks for Eli's scrap blaster and other between-wave inventions.
-- Drill-rig objectives, signal relays, harrier enemies, shield drones, and a visible buried field signal in the north-field waves.
+- Workshop unlocks for Eli's scrap blaster, tractor cannon, and other between-wave inventions.
+- Drill-rig objectives, signal relays, harrier enemies, shield drones, burrowers, and a visible buried field signal in the north-field waves.
 - Defendable farm structures with persistent consequences: the barn, power shed, and silo can all be damaged, destroyed, and repaired.
 - A touch HUD for phones and tablets with a movement pad, an aim/fire pad, and on-screen build and weapon buttons.
 - Integrated combat music and positional SFX for Eli, Patch, weapons, and alien events.
@@ -36,6 +37,7 @@ At startup, choose `Auto`, `Desktop`, or `Touch`.
 - `WASD` or arrow keys: move Eli
 - Mouse or `Space`: fire
 - `Q`: swap Eli's weapon after the scrap blaster is unlocked
+- `Esc`: open or close the pause/settings menu during a run
 - `1`: select the coil turret build
 - `2`: select the shock post build after it is unlocked
 - `3`: select the barbed barricade build after it is unlocked
@@ -46,6 +48,8 @@ Late-wave note:
 
 - `Shield drones` start appearing in the late Act 1 waves and can block frontal projectile fire.
 - `Shock posts` are the intended hard counter because their electrical discharge strips the shield and stuns the drone.
+- `Burrowers` start appearing in the late Act 1 waves and ignore barricades, so they put more pressure directly on the farm.
+- `Tractor Cannon` is a heavier Eli weapon unlocked from the workshop, with slower but much stronger shots.
 
 Touch mode:
 
@@ -53,6 +57,7 @@ Touch mode:
 - Right pad: aim and auto-fire
 - On-screen `Coil`, `Shock`, and `Fence` buttons: select the current build
 - On-screen `Weapon` button: swap between Eli's available guns
+- On-screen `Pause` button: open the same pause/settings menu used on desktop
 - Tap a build pad on the map: place the selected defense
 
 ## Project Layout
