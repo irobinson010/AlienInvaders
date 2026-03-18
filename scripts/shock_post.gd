@@ -45,6 +45,8 @@ func _physics_process(delta: float) -> void:
 
 	cooldown = fire_interval
 	pulse_flash = 0.18
+	if target.has_method("apply_emp"):
+		target.apply_emp(maxf(1.2, stun_duration + 0.65))
 	if target.has_method("apply_stun"):
 		target.apply_stun(stun_duration)
 	if target.has_method("take_damage"):

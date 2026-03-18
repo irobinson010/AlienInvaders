@@ -7,6 +7,12 @@ enum PatchPath {
 	SCOUT,
 }
 
+enum ControlMode {
+	AUTO,
+	DESKTOP,
+	TOUCH,
+}
+
 const WORLD_SIZE := Vector2(1280.0, 720.0)
 const PLAY_BOUNDS := Rect2(Vector2(70.0, 110.0), Vector2(1140.0, 540.0))
 const FARMHOUSE_POS := Vector2(640.0, 610.0)
@@ -82,11 +88,12 @@ const ACT_ONE_WAVES = [
 	},
 	{
 		"title": "Wave 5: Harvester Approach",
-		"story": "More lights peel off the mothership. A second relay slams down near the silo while harriers start strafing the farmhouse and raiders split off toward the silo and power shed.",
-		"objective": "Smash the new signal relay, hold off 14 attackers, and stop the silo and power shed from falling.",
+		"story": "More lights peel off the mothership. A second relay slams down near the silo while shield drones start screening the rush, harriers strafe the farmhouse, and raiders split off toward the silo and power shed.",
+		"objective": "Smash the new signal relay, crack the first shield drones, hold off 14 attackers, and stop the silo and power shed from falling.",
 		"spawn_count": 14,
 		"driller_count": 3,
 		"harrier_count": 3,
+		"shield_count": 2,
 		"structure_raids": [{"id":"silo", "count":3}, {"id":"power_shed", "count":2}],
 		"relay_trigger_spawned": 6,
 		"relay_position": Vector2(980.0, 254.0),
@@ -102,11 +109,12 @@ const ACT_ONE_WAVES = [
 	},
 	{
 		"title": "Wave 6: Final Stand At The Silo",
-		"story": "Everything comes in at once. A command drill rig locks onto the signal under the field while a final relay drives the lane into a frenzy and raiders break for the barn, silo, and power shed under harrier fire.",
-		"objective": "Smash the command drill rig and final relay, survive 16 attackers, and keep the barn, silo, and power shed alive.",
+		"story": "Everything comes in at once. A command drill rig locks onto the signal under the field while shield drones screen the final relay and raiders break for the barn, silo, and power shed under harrier fire.",
+		"objective": "Smash the command drill rig and final relay, break the shield screen, survive 16 attackers, and keep the barn, silo, and power shed alive.",
 		"spawn_count": 16,
 		"driller_count": 4,
 		"harrier_count": 4,
+		"shield_count": 3,
 		"drill_site": true,
 		"drill_rate": 3.10,
 		"drill_health": 14,
@@ -136,6 +144,7 @@ const BULLET_SCENE := preload("res://scenes/bullet.tscn")
 const ENEMY_BOLT_SCENE := preload("res://scenes/enemy_bolt.tscn")
 const TURRET_SCENE := preload("res://scenes/turret.tscn")
 const SHOCK_POST_SCENE := preload("res://scenes/shock_post.tscn")
+const BARRICADE_SCENE := preload("res://scenes/barricade.tscn")
 const BUILD_SPOT_SCENE := preload("res://scenes/build_spot.tscn")
 const MUSIC_FARM_DEFENSE_LOOP := preload("res://assets/audio/music/music_farm_defense_loop.ogg")
 const MUSIC_WAVE_WARNING_STING := preload("res://assets/audio/music/music_wave_warning_sting.ogg")
@@ -152,18 +161,33 @@ const WEAPON_NAILGUN := "nailgun"
 const WEAPON_SCRAP_BLASTER := "scrap_blaster"
 const BUILD_COIL_TURRET := "coil_turret"
 const BUILD_SHOCK_POST := "shock_post"
+const BUILD_BARRICADE := "barricade"
 const SCRAP_BLASTER_PELLET_COUNT := 5
 const SCRAP_BLASTER_SPREAD := 0.30
+const NAILGUN_FALLOFF_START := 150.0
+const NAILGUN_FALLOFF_END := 350.0
+const TOUCH_PAD_SIZE := Vector2(156.0, 156.0)
+const TOUCH_KNOB_SIZE := Vector2(62.0, 62.0)
+const TOUCH_PAD_RADIUS := 54.0
 
 var player: CharacterBody2D
 var dog: CharacterBody2D
 var current_drill_site: StaticBody2D
 var current_signal_relay: StaticBody2D
 var field_signal: Node2D
+var top_panel: ColorRect
+var bottom_panel: ColorRect
 var stats_label: Label
 var farm_status_label: Label
 var banner_label: Label
 var hint_label: Label
+var title_panel: PanelContainer
+var title_title_label: Label
+var title_body_label: Label
+var title_footer_label: Label
+var title_auto_button: Button
+var title_desktop_button: Button
+var title_touch_button: Button
 var briefing_panel: PanelContainer
 var briefing_title_label: Label
 var briefing_body_label: Label
@@ -183,11 +207,29 @@ var patch_footer_label: Label
 var patch_scrap_button: Button
 var patch_guard_button: Button
 var patch_scout_button: Button
+var touch_hud_root: Control
+var touch_move_base: ColorRect
+var touch_move_knob: ColorRect
+var touch_aim_base: ColorRect
+var touch_aim_knob: ColorRect
+var touch_swap_button: Button
+var touch_coil_button: Button
+var touch_shock_button: Button
+var touch_fence_button: Button
 var spawn_timer: Timer
 var banner_timer: Timer
 var music_player: AudioStreamPlayer
 var music_sting_player: AudioStreamPlayer
+var audio_started := false
 
+var control_mode_preference := ControlMode.AUTO
+var auto_touch_detected := false
+var touch_controls_active := false
+var touch_move_touch_id := -1
+var touch_aim_touch_id := -1
+var touch_move_knob_offset := Vector2.ZERO
+var touch_aim_vector := Vector2.RIGHT
+var touch_aim_knob_offset := Vector2.ZERO
 var scrap := 12
 var base_health := 10
 var kills := 0
@@ -213,6 +255,9 @@ var shock_post_cost := 10
 var shock_post_damage := 1
 var shock_post_fire_interval := 1.25
 var shock_post_stun_duration := 0.55
+var barricade_unlocked := false
+var barricade_cost := 6
+var barricade_health := 6
 var current_objective_text := "Review Eli's first defense plan."
 var base_wave_objective_text := "Review Eli's first defense plan."
 var farm_structures := {}
@@ -223,10 +268,12 @@ var wave_spawned := 0
 var active_aliens := 0
 var wave_drillers_remaining := 0
 var wave_harriers_remaining := 0
+var wave_shields_remaining := 0
 var current_wave_spawn_interval := 1.50
 var current_wave_start_delay := 0.80
 var current_wave_spawn_mode := "mixed"
 var relay_spawned_for_wave := false
+var shield_warning_sent := false
 var structure_raid_pool: Array[String] = []
 var structure_raid_notice_sent := false
 var pending_upgrade_choices: Array[Dictionary] = []
@@ -237,6 +284,7 @@ var pending_transition_text := ""
 func _ready() -> void:
 	randomize()
 	_setup_ui()
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	_setup_timers()
 	_setup_audio()
 	_spawn_player()
@@ -244,9 +292,10 @@ func _ready() -> void:
 	_spawn_field_signal()
 	_spawn_farm_structures()
 	_spawn_build_spots()
+	_layout_ui()
 	_update_hint()
 	_update_stats()
-	_show_briefing_for_wave(0, "Patch has not picked a specialty yet. This first wave is just about surviving the landing.")
+	_show_title_screen()
 	queue_redraw()
 
 
@@ -254,7 +303,7 @@ func _setup_ui() -> void:
 	var canvas_layer: CanvasLayer = CanvasLayer.new()
 	add_child(canvas_layer)
 
-	var top_panel: ColorRect = ColorRect.new()
+	top_panel = ColorRect.new()
 	top_panel.position = Vector2(0.0, 0.0)
 	top_panel.size = Vector2(WORLD_SIZE.x, 72.0)
 	top_panel.color = Color(0.10, 0.16, 0.11, 0.84)
@@ -280,7 +329,7 @@ func _setup_ui() -> void:
 	banner_label.modulate = Color8(255, 203, 120)
 	top_panel.add_child(banner_label)
 
-	var bottom_panel: ColorRect = ColorRect.new()
+	bottom_panel = ColorRect.new()
 	bottom_panel.position = Vector2(0.0, WORLD_SIZE.y - 44.0)
 	bottom_panel.size = Vector2(WORLD_SIZE.x, 44.0)
 	bottom_panel.color = Color(0.16, 0.10, 0.08, 0.80)
@@ -293,9 +342,83 @@ func _setup_ui() -> void:
 	hint_label.modulate = Color8(244, 234, 215)
 	bottom_panel.add_child(hint_label)
 
+	_setup_title_panel(canvas_layer)
 	_setup_briefing_panel(canvas_layer)
 	_setup_upgrade_panel(canvas_layer)
 	_setup_patch_panel(canvas_layer)
+	_setup_touch_hud(canvas_layer)
+
+
+func _setup_title_panel(canvas_layer: CanvasLayer) -> void:
+	title_panel = PanelContainer.new()
+	title_panel.position = Vector2(196.0, 106.0)
+	title_panel.size = Vector2(888.0, 402.0)
+	title_panel.visible = false
+	title_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	title_panel.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	canvas_layer.add_child(title_panel)
+
+	var panel_style: StyleBoxFlat = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.12, 0.10, 0.08, 0.96)
+	panel_style.border_color = Color8(245, 204, 124)
+	panel_style.border_width_left = 3
+	panel_style.border_width_top = 3
+	panel_style.border_width_right = 3
+	panel_style.border_width_bottom = 3
+	panel_style.corner_radius_top_left = 12
+	panel_style.corner_radius_top_right = 12
+	panel_style.corner_radius_bottom_left = 12
+	panel_style.corner_radius_bottom_right = 12
+	title_panel.add_theme_stylebox_override("panel", panel_style)
+
+	var content: VBoxContainer = VBoxContainer.new()
+	content.position = Vector2(28.0, 24.0)
+	content.size = Vector2(832.0, 346.0)
+	content.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	content.add_theme_constant_override("separation", 14)
+	title_panel.add_child(content)
+
+	title_title_label = Label.new()
+	title_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_title_label.modulate = Color8(255, 222, 165)
+	content.add_child(title_title_label)
+
+	title_body_label = Label.new()
+	title_body_label.size = Vector2(832.0, 168.0)
+	title_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title_body_label.modulate = Color8(239, 232, 213)
+	content.add_child(title_body_label)
+
+	var buttons_row: HBoxContainer = HBoxContainer.new()
+	buttons_row.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	buttons_row.add_theme_constant_override("separation", 14)
+	content.add_child(buttons_row)
+
+	title_auto_button = Button.new()
+	title_auto_button.text = "Auto"
+	title_auto_button.custom_minimum_size = Vector2(248.0, 56.0)
+	title_auto_button.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	title_auto_button.pressed.connect(_on_control_mode_selected.bind(ControlMode.AUTO))
+	buttons_row.add_child(title_auto_button)
+
+	title_desktop_button = Button.new()
+	title_desktop_button.text = "Desktop"
+	title_desktop_button.custom_minimum_size = Vector2(248.0, 56.0)
+	title_desktop_button.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	title_desktop_button.pressed.connect(_on_control_mode_selected.bind(ControlMode.DESKTOP))
+	buttons_row.add_child(title_desktop_button)
+
+	title_touch_button = Button.new()
+	title_touch_button.text = "Touch"
+	title_touch_button.custom_minimum_size = Vector2(248.0, 56.0)
+	title_touch_button.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	title_touch_button.pressed.connect(_on_control_mode_selected.bind(ControlMode.TOUCH))
+	buttons_row.add_child(title_touch_button)
+
+	title_footer_label = Label.new()
+	title_footer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_footer_label.modulate = Color8(191, 198, 207)
+	content.add_child(title_footer_label)
 
 
 func _setup_briefing_panel(canvas_layer: CanvasLayer) -> void:
@@ -496,6 +619,282 @@ func _setup_patch_panel(canvas_layer: CanvasLayer) -> void:
 	content.add_child(patch_footer_label)
 
 
+func _setup_touch_hud(canvas_layer: CanvasLayer) -> void:
+	touch_hud_root = Control.new()
+	touch_hud_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	touch_hud_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	touch_hud_root.visible = false
+	canvas_layer.add_child(touch_hud_root)
+
+	touch_move_base = ColorRect.new()
+	touch_move_base.position = Vector2(26.0, 488.0)
+	touch_move_base.size = TOUCH_PAD_SIZE
+	touch_move_base.color = Color(0.16, 0.20, 0.24, 0.28)
+	touch_move_base.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	touch_hud_root.add_child(touch_move_base)
+
+	var move_label: Label = Label.new()
+	move_label.text = "MOVE"
+	move_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	move_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	move_label.size = TOUCH_PAD_SIZE
+	move_label.modulate = Color8(223, 232, 241)
+	move_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	touch_move_base.add_child(move_label)
+
+	touch_move_knob = ColorRect.new()
+	touch_move_knob.size = TOUCH_KNOB_SIZE
+	touch_move_knob.color = Color(0.88, 0.92, 0.98, 0.42)
+	touch_move_knob.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	touch_move_base.add_child(touch_move_knob)
+
+	touch_aim_base = ColorRect.new()
+	touch_aim_base.position = Vector2(WORLD_SIZE.x - TOUCH_PAD_SIZE.x - 26.0, 488.0)
+	touch_aim_base.size = TOUCH_PAD_SIZE
+	touch_aim_base.color = Color(0.30, 0.16, 0.14, 0.30)
+	touch_aim_base.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	touch_hud_root.add_child(touch_aim_base)
+
+	var aim_label: Label = Label.new()
+	aim_label.text = "AIM / FIRE"
+	aim_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	aim_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	aim_label.size = TOUCH_PAD_SIZE
+	aim_label.modulate = Color8(252, 227, 213)
+	aim_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	touch_aim_base.add_child(aim_label)
+
+	touch_aim_knob = ColorRect.new()
+	touch_aim_knob.size = TOUCH_KNOB_SIZE
+	touch_aim_knob.color = Color(1.0, 0.90, 0.84, 0.44)
+	touch_aim_knob.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	touch_aim_base.add_child(touch_aim_knob)
+
+	touch_coil_button = _make_touch_action_button("Coil", Vector2(1114.0, 118.0))
+	touch_coil_button.pressed.connect(_on_touch_build_button_pressed.bind(BUILD_COIL_TURRET))
+	touch_hud_root.add_child(touch_coil_button)
+
+	touch_shock_button = _make_touch_action_button("Shock", Vector2(1114.0, 176.0))
+	touch_shock_button.pressed.connect(_on_touch_build_button_pressed.bind(BUILD_SHOCK_POST))
+	touch_hud_root.add_child(touch_shock_button)
+
+	touch_fence_button = _make_touch_action_button("Fence", Vector2(1114.0, 234.0))
+	touch_fence_button.pressed.connect(_on_touch_build_button_pressed.bind(BUILD_BARRICADE))
+	touch_hud_root.add_child(touch_fence_button)
+
+	touch_swap_button = _make_touch_action_button("Weapon", Vector2(1114.0, 292.0), Vector2(140.0, 58.0))
+	touch_swap_button.pressed.connect(_on_touch_swap_button_pressed)
+	touch_hud_root.add_child(touch_swap_button)
+
+	_update_touch_pad_visuals()
+
+
+func _make_touch_action_button(button_text: String, button_position: Vector2, button_size: Vector2 = Vector2(140.0, 52.0)) -> Button:
+	var button := Button.new()
+	button.position = button_position
+	button.size = button_size
+	button.text = button_text
+	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	return button
+
+
+func _show_title_screen() -> void:
+	current_objective_text = "Choose how to control Eli's defense."
+	banner_default = "Miller Farm: set the controls before the first landing."
+	title_title_label.text = "ALIEN INVADERS"
+	title_body_label.text = "Pick how Eli handles the farm before the first wave.\n\nAuto keeps desktop controls by default and switches to touch if the run sees screen touches. Touch mode puts a movement pad, an aim-and-fire pad, and build buttons directly on the screen for phones and tablets."
+	title_footer_label.text = "Desktop is best for keyboard and mouse. Touch is best for phones. Auto is the safest web default."
+	title_panel.visible = true
+	briefing_panel.visible = false
+	upgrade_panel.visible = false
+	patch_panel.visible = false
+	get_tree().paused = true
+	banner_label.text = banner_default
+	_apply_control_mode()
+	_update_hint()
+	_update_stats()
+
+
+func _on_control_mode_selected(selected_mode: int) -> void:
+	_ensure_audio_started()
+	control_mode_preference = selected_mode
+	if selected_mode == ControlMode.DESKTOP:
+		auto_touch_detected = false
+	elif selected_mode == ControlMode.TOUCH:
+		auto_touch_detected = true
+	_apply_control_mode()
+	title_panel.visible = false
+	_show_briefing_for_wave(0, _control_mode_transition_text())
+
+
+func _control_mode_transition_text() -> String:
+	match control_mode_preference:
+		ControlMode.DESKTOP:
+			return "Control mode: Desktop. Eli uses keyboard movement, mouse aim, and keyboard build hotkeys."
+		ControlMode.TOUCH:
+			return "Control mode: Touch. Use the left pad to move, the right pad to aim and fire, and the on-screen buttons to swap weapons or pick builds."
+		_:
+			if touch_controls_active:
+				return "Control mode: Auto. Touch input was detected, so the mobile HUD is live for this run."
+			return "Control mode: Auto. Desktop controls stay live until the game sees a screen touch, then the touch HUD appears."
+
+
+func _apply_control_mode() -> void:
+	var should_use_touch := control_mode_preference == ControlMode.TOUCH or (control_mode_preference == ControlMode.AUTO and auto_touch_detected)
+	if touch_controls_active != should_use_touch:
+		touch_controls_active = should_use_touch
+		_clear_touch_control_state()
+	if player != null and is_instance_valid(player):
+		player.set_touch_controls_enabled(touch_controls_active)
+	_refresh_touch_hud()
+	_update_hint()
+
+
+func _clear_touch_control_state() -> void:
+	touch_move_touch_id = -1
+	touch_aim_touch_id = -1
+	touch_move_knob_offset = Vector2.ZERO
+	touch_aim_knob_offset = Vector2.ZERO
+	if player != null and is_instance_valid(player):
+		player.clear_touch_movement()
+		player.stop_touch_aim()
+	_update_touch_pad_visuals()
+
+
+func _touch_gameplay_enabled() -> bool:
+	if not touch_controls_active:
+		return false
+	if title_panel.visible or briefing_panel.visible or upgrade_panel.visible or patch_panel.visible:
+		return false
+	if get_tree().paused or game_over or mission_complete:
+		return false
+	return true
+
+
+func _refresh_touch_hud() -> void:
+	if touch_hud_root == null:
+		return
+
+	touch_hud_root.visible = _touch_gameplay_enabled()
+	touch_coil_button.text = "Coil\n%d" % turret_cost
+	touch_shock_button.text = "Shock\n%d" % shock_post_cost
+	touch_fence_button.text = "Fence\n%d" % barricade_cost
+	touch_swap_button.text = "Weapon\n%s" % _current_weapon_name()
+	touch_swap_button.visible = touch_hud_root.visible and scrap_blaster_unlocked
+	touch_coil_button.visible = touch_hud_root.visible
+	touch_shock_button.visible = touch_hud_root.visible and shock_post_unlocked
+	touch_fence_button.visible = touch_hud_root.visible and barricade_unlocked
+	_update_touch_button_state(touch_coil_button, selected_build_type == BUILD_COIL_TURRET)
+	_update_touch_button_state(touch_shock_button, selected_build_type == BUILD_SHOCK_POST)
+	_update_touch_button_state(touch_fence_button, selected_build_type == BUILD_BARRICADE)
+	_update_touch_button_state(touch_swap_button, false)
+	_update_touch_pad_visuals()
+
+
+func _update_touch_button_state(button: Button, is_selected: bool) -> void:
+	if button == null:
+		return
+	button.modulate = Color8(255, 234, 196) if is_selected else Color8(216, 218, 224)
+
+
+func _touch_pad_center(pad: Control) -> Vector2:
+	return pad.global_position + pad.size * 0.5
+
+
+func _touch_point_hits_button(screen_position: Vector2) -> bool:
+	for button in [touch_swap_button, touch_coil_button, touch_shock_button, touch_fence_button]:
+		if button != null and button.visible and button.get_global_rect().has_point(screen_position):
+			return true
+	return false
+
+
+func _touch_pad_contains(pad: Control, screen_position: Vector2) -> bool:
+	return _touch_pad_center(pad).distance_to(screen_position) <= TOUCH_PAD_RADIUS + 24.0
+
+
+func _update_touch_move_from_position(screen_position: Vector2) -> void:
+	var center := _touch_pad_center(touch_move_base)
+	var offset := screen_position - center
+	if offset.length() > TOUCH_PAD_RADIUS:
+		offset = offset.normalized() * TOUCH_PAD_RADIUS
+	touch_move_knob_offset = offset
+	if player != null and is_instance_valid(player):
+		player.set_touch_move_vector(offset / TOUCH_PAD_RADIUS)
+	_update_touch_pad_visuals()
+
+
+func _update_touch_aim_from_position(screen_position: Vector2) -> void:
+	var center := _touch_pad_center(touch_aim_base)
+	var offset := screen_position - center
+	if offset.length() > TOUCH_PAD_RADIUS:
+		offset = offset.normalized() * TOUCH_PAD_RADIUS
+	touch_aim_knob_offset = offset
+	if offset.length() > 10.0:
+		touch_aim_vector = offset.normalized()
+	if player != null and is_instance_valid(player):
+		player.set_touch_aim_direction(touch_aim_vector, true)
+	_update_touch_pad_visuals()
+
+
+func _update_touch_pad_visuals() -> void:
+	if touch_move_base == null or touch_move_knob == null or touch_aim_base == null or touch_aim_knob == null:
+		return
+	touch_move_knob.position = (touch_move_base.size - touch_move_knob.size) * 0.5 + touch_move_knob_offset
+	touch_aim_knob.position = (touch_aim_base.size - touch_aim_knob.size) * 0.5 + touch_aim_knob_offset
+
+
+func _handle_touch_pressed(touch_id: int, screen_position: Vector2) -> bool:
+	if _touch_point_hits_button(screen_position):
+		return false
+	if touch_move_touch_id == -1 and _touch_pad_contains(touch_move_base, screen_position):
+		touch_move_touch_id = touch_id
+		_update_touch_move_from_position(screen_position)
+		return true
+	if touch_aim_touch_id == -1 and _touch_pad_contains(touch_aim_base, screen_position):
+		touch_aim_touch_id = touch_id
+		_update_touch_aim_from_position(screen_position)
+		return true
+	return false
+
+
+func _handle_touch_drag(touch_id: int, screen_position: Vector2) -> bool:
+	if touch_id == touch_move_touch_id:
+		_update_touch_move_from_position(screen_position)
+		return true
+	if touch_id == touch_aim_touch_id:
+		_update_touch_aim_from_position(screen_position)
+		return true
+	return false
+
+
+func _handle_touch_released(touch_id: int) -> bool:
+	if touch_id == touch_move_touch_id:
+		touch_move_touch_id = -1
+		touch_move_knob_offset = Vector2.ZERO
+		if player != null and is_instance_valid(player):
+			player.clear_touch_movement()
+		_update_touch_pad_visuals()
+		return true
+	if touch_id == touch_aim_touch_id:
+		touch_aim_touch_id = -1
+		touch_aim_knob_offset = Vector2.ZERO
+		if player != null and is_instance_valid(player):
+			player.stop_touch_aim()
+		_update_touch_pad_visuals()
+		return true
+	return false
+
+
+func _on_touch_build_button_pressed(build_type: String) -> void:
+	_ensure_audio_started()
+	_select_build_type(build_type)
+
+
+func _on_touch_swap_button_pressed() -> void:
+	_ensure_audio_started()
+	_toggle_weapon()
+
+
 func _setup_timers() -> void:
 	spawn_timer = Timer.new()
 	spawn_timer.one_shot = true
@@ -522,13 +921,72 @@ func _setup_audio() -> void:
 	music_sting_player.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(music_sting_player)
 
-	if DisplayServer.get_name() != "headless":
+	if DisplayServer.get_name() != "headless" and not OS.has_feature("web"):
 		music_player.play()
+		audio_started = true
 
 
 func _on_music_player_finished() -> void:
 	if music_player != null and is_instance_valid(music_player):
 		music_player.play()
+
+
+func _ensure_audio_started() -> void:
+	if audio_started or DisplayServer.get_name() == "headless":
+		return
+	if music_player == null or not is_instance_valid(music_player):
+		return
+
+	audio_started = true
+	if not music_player.playing:
+		music_player.play()
+
+
+func _on_viewport_size_changed() -> void:
+	_layout_ui()
+	queue_redraw()
+
+
+func _layout_ui() -> void:
+	var viewport_size := get_viewport_rect().size
+	if top_panel != null:
+		top_panel.position = Vector2.ZERO
+		top_panel.size = Vector2(viewport_size.x, 72.0)
+	if bottom_panel != null:
+		bottom_panel.position = Vector2(0.0, viewport_size.y - 44.0)
+		bottom_panel.size = Vector2(viewport_size.x, 44.0)
+	if stats_label != null:
+		stats_label.position = Vector2(18.0, 10.0)
+		stats_label.size = Vector2(maxf(360.0, viewport_size.x - 460.0), 22.0)
+	if farm_status_label != null:
+		farm_status_label.position = Vector2(18.0, 38.0)
+		farm_status_label.size = Vector2(maxf(360.0, viewport_size.x - 460.0), 22.0)
+	if banner_label != null:
+		banner_label.position = Vector2(maxf(18.0, viewport_size.x - 406.0), 22.0)
+		banner_label.size = Vector2(388.0, 24.0)
+	if hint_label != null:
+		hint_label.position = Vector2(18.0, 11.0)
+		hint_label.size = Vector2(maxf(360.0, viewport_size.x - 36.0), 22.0)
+	for panel in [title_panel, briefing_panel, upgrade_panel, patch_panel]:
+		if panel != null:
+			panel.position = (viewport_size - panel.size) * 0.5
+	_layout_touch_hud(viewport_size)
+
+
+func _layout_touch_hud(viewport_size: Vector2) -> void:
+	if touch_move_base == null or touch_aim_base == null:
+		return
+
+	var pad_y := maxf(84.0, viewport_size.y - TOUCH_PAD_SIZE.y - 58.0)
+	touch_move_base.position = Vector2(26.0, pad_y)
+	touch_aim_base.position = Vector2(viewport_size.x - TOUCH_PAD_SIZE.x - 26.0, pad_y)
+
+	var button_x := viewport_size.x - 166.0
+	touch_coil_button.position = Vector2(button_x, 118.0)
+	touch_shock_button.position = Vector2(button_x, 176.0)
+	touch_fence_button.position = Vector2(button_x, 234.0)
+	touch_swap_button.position = Vector2(button_x, 292.0)
+	_update_touch_pad_visuals()
 
 
 func _play_positional_sfx(stream: AudioStream, world_position: Vector2, volume_db: float = -3.0, pitch_min: float = 0.97, pitch_max: float = 1.03) -> void:
@@ -551,6 +1009,7 @@ func _spawn_player() -> void:
 	player.position = Vector2(640.0, 510.0)
 	player.play_bounds = PLAY_BOUNDS
 	player.set_move_speed(player_move_speed)
+	player.set_touch_controls_enabled(touch_controls_active)
 	player.fired.connect(_on_player_fired)
 	add_child(player)
 	_refresh_player_weapon()
@@ -590,7 +1049,10 @@ func _spawn_build_spots() -> void:
 		Vector2(430.0, 548.0),
 		Vector2(535.0, 582.0),
 		Vector2(745.0, 582.0),
-		Vector2(850.0, 548.0)
+		Vector2(850.0, 548.0),
+		Vector2(332.0, 566.0),
+		Vector2(874.0, 606.0),
+		Vector2(974.0, 486.0)
 	]
 
 	for build_position in build_positions:
@@ -681,17 +1143,23 @@ func _apply_player_fire_rate_boost(nailgun_delta: float, scrap_blaster_delta: fl
 func _build_cost_for_type(build_type: String) -> int:
 	if build_type == BUILD_SHOCK_POST:
 		return shock_post_cost
+	if build_type == BUILD_BARRICADE:
+		return barricade_cost
 	return turret_cost
 
 
 func _build_name_for_type(build_type: String) -> String:
 	if build_type == BUILD_SHOCK_POST:
 		return "shock post"
+	if build_type == BUILD_BARRICADE:
+		return "barbed barricade"
 	return "coil turret"
 
 
 func _select_build_type(build_type: String, announce: bool = true) -> void:
 	if build_type == BUILD_SHOCK_POST and not shock_post_unlocked:
+		return
+	if build_type == BUILD_BARRICADE and not barricade_unlocked:
 		return
 
 	selected_build_type = build_type
@@ -754,6 +1222,7 @@ func _compose_briefing_text(wave_data: Dictionary, transition_text: String) -> S
 
 
 func _on_briefing_continue_pressed() -> void:
+	_ensure_audio_started()
 	if mission_complete or game_over:
 		get_tree().paused = false
 		get_tree().reload_current_scene()
@@ -777,9 +1246,11 @@ func _start_wave(wave_index: int) -> void:
 	wave_total_spawns = int(wave_data["spawn_count"])
 	wave_drillers_remaining = int(wave_data["driller_count"])
 	wave_harriers_remaining = int(wave_data["harrier_count"])
+	wave_shields_remaining = int(wave_data.get("shield_count", 0))
 	wave_spawned = 0
 	active_aliens = 0
 	relay_spawned_for_wave = false
+	shield_warning_sent = false
 	structure_raid_pool = _build_structure_raid_pool(wave_data)
 	structure_raid_notice_sent = false
 	_spawn_wave_objectives(wave_data)
@@ -830,6 +1301,11 @@ func _spawn_alien() -> void:
 			_play_positional_sfx(SFX_ALIEN_BRUTE_ROAR, spawn_position, -11.0, 0.94, 1.02)
 		"harrier":
 			_play_positional_sfx(SFX_ALIEN_CHITTER_IDLE, spawn_position, -18.0, 1.04, 1.10)
+		"shield_drone":
+			_play_positional_sfx(SFX_ALIEN_CHITTER_IDLE, spawn_position, -16.0, 0.90, 0.98)
+			if not shield_warning_sent:
+				shield_warning_sent = true
+				_set_banner("Shield drone on the lane. Flank it or crack it with shock posts.", 2.4)
 		_:
 			if randf() <= 0.22:
 				_play_positional_sfx(SFX_ALIEN_CHITTER_IDLE, spawn_position, -20.0, 0.98, 1.08)
@@ -919,23 +1395,22 @@ func _maybe_spawn_midwave_objective() -> void:
 
 func _pick_enemy_kind() -> String:
 	var remaining_slots: int = wave_total_spawns - wave_spawned
-	var specialists_remaining: int = wave_drillers_remaining + wave_harriers_remaining
+	var specialists_remaining: int = wave_drillers_remaining + wave_harriers_remaining + wave_shields_remaining
 	if specialists_remaining <= 0:
 		return "scout"
 
 	if remaining_slots <= specialists_remaining:
-		if wave_drillers_remaining > 0 and (wave_harriers_remaining <= 0 or _has_live_drill_site()):
-			wave_drillers_remaining -= 1
-			return "driller"
 		if wave_harriers_remaining > 0:
-			wave_harriers_remaining -= 1
-			return "harrier"
-		wave_drillers_remaining = maxi(0, wave_drillers_remaining - 1)
-		return "driller"
+			return _consume_specialist_kind("harrier")
+		if wave_shields_remaining > 0:
+			return _consume_specialist_kind("shield_drone")
+		return _consume_specialist_kind("driller")
 
 	var available_specialists: Array[String] = []
 	if wave_harriers_remaining > 0 and wave_spawned >= int(floor(float(wave_total_spawns) * 0.25)):
 		available_specialists.append("harrier")
+	if wave_shields_remaining > 0 and wave_spawned >= int(floor(float(wave_total_spawns) * 0.33)):
+		available_specialists.append("shield_drone")
 	if wave_drillers_remaining > 0 and wave_spawned >= int(floor(float(wave_total_spawns) * 0.45)):
 		available_specialists.append("driller")
 
@@ -943,10 +1418,17 @@ func _pick_enemy_kind() -> String:
 		return "scout"
 
 	var selected_kind: String = available_specialists[randi() % available_specialists.size()]
-	if selected_kind == "harrier":
-		wave_harriers_remaining -= 1
-	else:
-		wave_drillers_remaining -= 1
+	return _consume_specialist_kind(selected_kind)
+
+
+func _consume_specialist_kind(selected_kind: String) -> String:
+	match selected_kind:
+		"harrier":
+			wave_harriers_remaining = maxi(0, wave_harriers_remaining - 1)
+		"shield_drone":
+			wave_shields_remaining = maxi(0, wave_shields_remaining - 1)
+		_:
+			wave_drillers_remaining = maxi(0, wave_drillers_remaining - 1)
 	return selected_kind
 
 
@@ -1004,6 +1486,7 @@ func _show_patch_choice() -> void:
 
 
 func _on_patch_path_selected(selected_path: int) -> void:
+	_ensure_audio_started()
 	patch_path = selected_path
 	var upgrade_text: String = _apply_patch_rank(1, false)
 	patch_panel.visible = false
@@ -1061,7 +1544,7 @@ func _upgrade_options_for_wave(next_wave_number: int) -> Array[Dictionary]:
 			options = [
 				{"id":"capacitor_slugs","name":"Capacitor Slugs","description":"Overcharge the ammo feed. Player shots hit harder."},
 				{"id":"scrap_blaster_rig","name":"Scrap Blaster Rig","description":"Build a spread-shot farm blaster. Press Q to swap weapons."},
-				{"id":"coil_molds","name":"Coil Molds","description":"Reuse emitter shells. Turrets cost 1 less scrap."}
+				{"id":"fence_spools","name":"Fence Spools","description":"Unlock barbed barricades. Press 3 to build them on open pads."}
 			]
 		4:
 			options = [
@@ -1072,7 +1555,7 @@ func _upgrade_options_for_wave(next_wave_number: int) -> Array[Dictionary]:
 		5:
 			options = [
 				{"id":"shock_braid","name":"Shock Braid","description":"Wrap the farm emitters. Built defenses deal more damage."},
-				{"id":"shock_post_kit","name":"Shock Post Kit","description":"Unlock a stun post. Press 2 to build it on a pad."},
+				{"id":"shock_post_kit","name":"Shock Post Kit","description":"Unlock a stun post that cracks shield drones. Press 2 to build it on a pad."},
 				{"id":"windmill_dynamo","name":"Windmill Dynamo","description":"Push more current through the farm grid for faster shots."}
 			]
 		6:
@@ -1084,7 +1567,12 @@ func _upgrade_options_for_wave(next_wave_number: int) -> Array[Dictionary]:
 	if next_wave_number >= 3:
 		var structure_option: Dictionary = _structure_repair_option()
 		if not structure_option.is_empty() and options.size() >= 3:
-			options[1] = structure_option
+			var replace_index := 1
+			if next_wave_number == 3:
+				replace_index = 0
+			elif next_wave_number == 5 and not shock_post_unlocked:
+				replace_index = 2
+			options[replace_index] = structure_option
 	return options
 
 
@@ -1169,6 +1657,7 @@ func _path_upgrade_option_for_wave_six() -> Dictionary:
 
 
 func _on_upgrade_selected(choice_index: int) -> void:
+	_ensure_audio_started()
 	if choice_index < 0 or choice_index >= pending_upgrade_choices.size():
 		return
 
@@ -1275,6 +1764,10 @@ func _apply_invention_upgrade(upgrade_id: String) -> String:
 			current_weapon_id = WEAPON_SCRAP_BLASTER
 			_refresh_player_weapon()
 			return "Scrap Blaster rigged together. Eli can swap weapons with Q and opens on the lane with a spread shot."
+		"fence_spools":
+			barricade_unlocked = true
+			selected_build_type = BUILD_BARRICADE
+			return "Fence Spools unpacked. Press 3 to build barbed barricades that intercept raiders near the farm."
 		"coil_molds":
 			turret_cost = maxi(4, turret_cost - 1)
 			return "Coil Molds finished. New turrets cost %d scrap." % turret_cost
@@ -1320,7 +1813,7 @@ func _apply_invention_upgrade(upgrade_id: String) -> String:
 		"shock_post_kit":
 			shock_post_unlocked = true
 			selected_build_type = BUILD_SHOCK_POST
-			return "Shock Post Kit assembled. Press 2 to build stun posts on open pads."
+			return "Shock Post Kit assembled. Press 2 to build stun posts that strip shield drones and lock the lane down."
 		"windmill_dynamo":
 			_apply_player_fire_rate_boost(0.015, 0.04)
 			turret_fire_interval = maxf(0.44, turret_fire_interval - 0.06)
@@ -1387,17 +1880,17 @@ func _between_wave_text_for_wave(next_wave_number: int) -> String:
 				_:
 					return "Fresh crop circles point to something buried under the north field while harriers rise over the corn and the barn workshop comes into range."
 		5:
-			return "The buried signal is fully awake now. Another relay drops near the silo while harriers start ranging the farmhouse and split raiders push toward the silo and power shed."
+			return "The buried signal is fully awake now. Another relay drops near the silo while shield drones screen the lane, harriers range the farmhouse, and split raiders push toward the silo and power shed."
 		6:
 			match patch_path:
 				PatchPath.SCRAP:
-					return "The salvage pile behind the barn has become a real workshop, and Patch is still dragging in usable alloy while the final relay, command rig, and structure raids line up over the field."
+					return "The salvage pile behind the barn has become a real workshop, and Patch is still dragging in usable alloy while shield drones, the final relay, the command rig, and structure raids line up over the field."
 				PatchPath.GUARD:
-					return "Patch's bark rolls across the lane like thunder. Even the bigger saucers hesitate when he squares up against the final relay, command rig, and the last structure raid."
+					return "Patch's bark rolls across the lane like thunder. Even the shield drones hesitate when he squares up against the final relay, command rig, and the last structure raid."
 				PatchPath.SCOUT:
-					return "Patch digs up one last sealed cache near the tractor shed, and Eli folds it into the farm's last defenses while the final relay lights the field and raiders break for every standing building."
+					return "Patch digs up one last sealed cache near the tractor shed, and Eli folds it into the farm's last defenses while shield drones screen the final relay and raiders break for every standing building."
 				_:
-					return "The silo throws long shadows over the field while a final relay, command rig, and structure raid line up the last rush in the sky."
+					return "The silo throws long shadows over the field while shield drones, a final relay, a command rig, and a structure raid line up the last rush in the sky."
 		_:
 			return ""
 
@@ -1411,10 +1904,10 @@ func _refresh_turret_stats() -> void:
 			node.set_stats(_effective_shock_post_fire_interval(), shock_post_damage, shock_post_stun_duration)
 
 
-func _spawn_bullet(origin: Vector2, direction: Vector2, speed: float, damage: int, lifetime: float = 1.6, radius: float = 6.0, core_color: Color = Color8(255, 241, 196), tail_color: Color = Color8(255, 185, 71)) -> void:
+func _spawn_bullet(origin: Vector2, direction: Vector2, speed: float, damage: int, lifetime: float = 1.6, radius: float = 6.0, core_color: Color = Color8(255, 241, 196), tail_color: Color = Color8(255, 185, 71), damage_falloff_start: float = -1.0, damage_falloff_end: float = -1.0, minimum_damage: int = 1) -> void:
 	var bullet: Area2D = BULLET_SCENE.instantiate() as Area2D
 	bullet.global_position = origin
-	bullet.configure(direction, speed, damage, lifetime, radius, core_color, tail_color)
+	bullet.configure(direction, speed, damage, lifetime, radius, core_color, tail_color, damage_falloff_start, damage_falloff_end, minimum_damage)
 	add_child(bullet)
 
 
@@ -1434,7 +1927,7 @@ func _on_player_fired(origin: Vector2, direction: Vector2) -> void:
 		return
 
 	_play_positional_sfx(SFX_WEAPON_LASER_PEW, origin, -14.0, 0.97, 1.05)
-	_spawn_bullet(origin, direction, 860.0, player_bullet_damage)
+	_spawn_bullet(origin, direction, 860.0, player_bullet_damage, 1.2, 6.0, Color8(255, 241, 196), Color8(255, 185, 71), NAILGUN_FALLOFF_START, NAILGUN_FALLOFF_END, 0)
 
 
 func _on_build_requested(spot) -> void:
@@ -1460,6 +1953,13 @@ func _on_build_requested(spot) -> void:
 		add_child(shock_post)
 		_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, spot.global_position, -10.0, 0.88, 0.96)
 		_set_banner("Shock post online. The lane is going to spark.", 1.8)
+	elif selected_build_type == BUILD_BARRICADE:
+		var barricade: Node2D = BARRICADE_SCENE.instantiate() as Node2D
+		barricade.position = spot.position
+		barricade.configure(barricade_health)
+		add_child(barricade)
+		_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, spot.global_position, -12.0, 0.84, 0.92)
+		_set_banner("Barbed barricade hammered in. Raiders will have to chew through it first.", 1.9)
 	else:
 		var turret: Node2D = TURRET_SCENE.instantiate() as Node2D
 		turret.position = spot.position
@@ -1873,23 +2373,50 @@ func _farm_status_text() -> String:
 
 
 func _update_hint() -> void:
+	if title_panel != null and title_panel.visible:
+		hint_label.text = "Choose Auto, Desktop, or Touch before the first wave starts."
+		_refresh_touch_hud()
+		return
+
 	if mission_complete:
 		hint_label.text = "Act 1 complete. Press R or use the panel to restart the defense."
+		_refresh_touch_hud()
 		return
 
 	if game_over:
 		hint_label.text = "Farm overrun. Restart with R or use the restart panel."
+		_refresh_touch_hud()
 		return
 
-	var hint_text := "Objective: %s   WASD/Arrows Move   Mouse/Space Fire" % current_objective_text
-	if scrap_blaster_unlocked:
-		hint_text += "   Q Swap Gun"
-	if shock_post_unlocked:
-		hint_text += "   Click Pad Build   1 Coil(%d) 2 Shock(%d)" % [turret_cost, shock_post_cost]
+	var hint_text := "Objective: %s" % current_objective_text
+	if touch_controls_active:
+		hint_text += "   Left Pad Move   Right Pad Aim/Fire   Tap Build Pad Place"
+		if scrap_blaster_unlocked:
+			hint_text += "   Weapon Button Swap"
+		if shock_post_unlocked and barricade_unlocked:
+			hint_text += "   Build Buttons: Coil / Shock / Fence"
+		elif shock_post_unlocked:
+			hint_text += "   Build Buttons: Coil / Shock"
+		elif barricade_unlocked:
+			hint_text += "   Build Buttons: Coil / Fence"
+		else:
+			hint_text += "   Build Button: Coil"
 	else:
-		hint_text += "   Click Pad Build Coil(%d)" % turret_cost
+		hint_text += "   WASD/Arrows Move   Mouse/Space Fire"
+		if scrap_blaster_unlocked:
+			hint_text += "   Q Swap Gun"
+		hint_text += "   Click Pad Build"
+		if shock_post_unlocked and barricade_unlocked:
+			hint_text += "   1 Coil(%d) 2 Shock(%d) 3 Fence(%d)" % [turret_cost, shock_post_cost, barricade_cost]
+		elif shock_post_unlocked:
+			hint_text += "   1 Coil(%d) 2 Shock(%d)" % [turret_cost, shock_post_cost]
+		elif barricade_unlocked:
+			hint_text += "   1 Coil(%d) 3 Fence(%d)" % [turret_cost, barricade_cost]
+		else:
+			hint_text += "   Coil(%d)" % turret_cost
 	hint_text += "   R Restart"
 	hint_label.text = hint_text
+	_refresh_touch_hud()
 
 
 func _patch_summary() -> String:
@@ -1943,19 +2470,52 @@ func _story_text_for_wave(current_wave: int) -> String:
 				_:
 					return "Wave 4: Fresh crop circles point to a relay beacon while the barn workshop comes under attack."
 		5:
-			return "Wave 5: Another relay drives the harriers while split raiders close on the silo and power shed."
+			return "Wave 5: Shield drones start screening the rush while another relay drives the harriers into the silo lane."
 		6:
 			match patch_path:
 				PatchPath.SCOUT:
-					return "Wave 6: Patch turns up sealed alien gear while the command rig, final relay, and structure raid drill for the heart of the farm."
+					return "Wave 6: Patch turns up sealed alien gear while shield drones, the command rig, the final relay, and the structure raid drill for the heart of the farm."
 				PatchPath.SCRAP:
-					return "Wave 6: The salvage pile grows into a full workshop as the command rig, final relay, and structure raid bore into the farm."
+					return "Wave 6: The salvage pile grows into a full workshop as shield drones, the command rig, the final relay, and the structure raid bore into the farm."
 				PatchPath.GUARD:
-					return "Wave 6: Patch's bark rolls across the farm while the command rig, final relay, and structure raid pound the field."
+					return "Wave 6: Patch's bark rolls across the farm while shield drones, the command rig, the final relay, and the structure raid pound the field."
 				_:
-					return "Wave 6: A command rig, final relay, and structure raid hammer the field while Eli turns the tractor shed into a war workshop."
+					return "Wave 6: Shield drones, a command rig, a final relay, and a structure raid hammer the field while Eli turns the tractor shed into a war workshop."
 		_:
 			return "The field stays loud with engines and falling metal."
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed:
+		_ensure_audio_started()
+	elif event is InputEventMouseButton and event.pressed:
+		_ensure_audio_started()
+	elif event is InputEventScreenTouch and event.pressed:
+		_ensure_audio_started()
+
+	if event is InputEventScreenTouch or event is InputEventScreenDrag:
+		if control_mode_preference == ControlMode.AUTO and not auto_touch_detected:
+			auto_touch_detected = true
+			_apply_control_mode()
+
+	if not _touch_gameplay_enabled():
+		return
+
+	if event is InputEventScreenTouch:
+		var touch_event := event as InputEventScreenTouch
+		var handled := false
+		if touch_event.pressed:
+			handled = _handle_touch_pressed(touch_event.index, touch_event.position)
+		else:
+			handled = _handle_touch_released(touch_event.index)
+		if handled:
+			get_viewport().set_input_as_handled()
+		return
+
+	if event is InputEventScreenDrag:
+		var drag_event := event as InputEventScreenDrag
+		if _handle_touch_drag(drag_event.index, drag_event.position):
+			get_viewport().set_input_as_handled()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -1981,22 +2541,28 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("build_secondary"):
 		get_viewport().set_input_as_handled()
 		_select_build_type(BUILD_SHOCK_POST)
+		return
+
+	if event.is_action_pressed("build_tertiary"):
+		get_viewport().set_input_as_handled()
+		_select_build_type(BUILD_BARRICADE)
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, WORLD_SIZE), Color8(251, 210, 157))
+	var viewport_size := get_viewport_rect().size
+	draw_rect(Rect2(Vector2.ZERO, viewport_size), Color8(251, 210, 157))
 	draw_circle(Vector2(1116.0, 118.0), 76.0, Color8(255, 239, 174))
-	draw_rect(Rect2(Vector2(0.0, 248.0), Vector2(WORLD_SIZE.x, 472.0)), Color8(195, 151, 82))
-	draw_rect(Rect2(Vector2(0.0, 464.0), Vector2(WORLD_SIZE.x, 256.0)), Color8(120, 155, 76))
+	draw_rect(Rect2(Vector2(0.0, 248.0), Vector2(viewport_size.x, maxf(0.0, viewport_size.y - 248.0))), Color8(195, 151, 82))
+	draw_rect(Rect2(Vector2(0.0, 464.0), Vector2(viewport_size.x, maxf(0.0, viewport_size.y - 464.0))), Color8(120, 155, 76))
 
 	for row in range(6):
 		var y: float = 288.0 + float(row) * 34.0
-		draw_line(Vector2(80.0, y), Vector2(1200.0, y + 54.0), Color8(147, 110, 58), 2.0, true)
+		draw_line(Vector2(80.0, y), Vector2(maxf(1200.0, viewport_size.x - 80.0), y + 54.0), Color8(147, 110, 58), 2.0, true)
 
-	for x in range(96, 1184, 48):
+	for x in range(96, maxi(1184, int(viewport_size.x) - 96), 48):
 		draw_line(Vector2(float(x), 440.0), Vector2(float(x), 470.0), Color8(235, 224, 193), 3.0, true)
-	draw_line(Vector2(72.0, 444.0), Vector2(1208.0, 444.0), Color8(235, 224, 193), 4.0, true)
-	draw_line(Vector2(72.0, 470.0), Vector2(1208.0, 470.0), Color8(235, 224, 193), 4.0, true)
+	draw_line(Vector2(72.0, 444.0), Vector2(maxf(1208.0, viewport_size.x - 72.0), 444.0), Color8(235, 224, 193), 4.0, true)
+	draw_line(Vector2(72.0, 470.0), Vector2(maxf(1208.0, viewport_size.x - 72.0), 470.0), Color8(235, 224, 193), 4.0, true)
 
 	var lane_rect := Rect2(Vector2(FARMHOUSE_POS.x - 62.0, 420.0), Vector2(124.0, 180.0))
 	draw_rect(lane_rect, Color8(170, 139, 94))

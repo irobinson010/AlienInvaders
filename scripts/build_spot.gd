@@ -31,6 +31,8 @@ func _on_input_event(_viewport: Node, event: InputEvent, _shape_idx: int) -> voi
 
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		build_requested.emit(self)
+	elif event is InputEventScreenTouch and event.pressed:
+		build_requested.emit(self)
 
 
 func _draw() -> void:

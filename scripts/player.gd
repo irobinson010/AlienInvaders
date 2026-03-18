@@ -8,6 +8,10 @@ var play_bounds := Rect2(Vector2(70.0, 110.0), Vector2(1140.0, 540.0))
 var aim_direction := Vector2.RIGHT
 var fire_cooldown := 0.0
 var weapon_style := "nailgun"
+var touch_controls_enabled := false
+var touch_move_vector := Vector2.ZERO
+var touch_fire_active := false
+var touch_aim_direction := Vector2.RIGHT
 
 
 func _ready() -> void:
@@ -23,7 +27,7 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	var input_vector := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var input_vector := touch_move_vector if touch_controls_enabled else Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	velocity = input_vector * move_speed
 	move_and_slide()
 
@@ -31,14 +35,19 @@ func _physics_process(delta: float) -> void:
 	var max_bounds := play_bounds.position + play_bounds.size
 	global_position = global_position.clamp(min_bounds, max_bounds)
 
-	var mouse_vector := get_global_mouse_position() - global_position
-	if mouse_vector.length_squared() > 1.0:
-		aim_direction = mouse_vector.normalized()
+	if touch_controls_enabled:
+		if touch_aim_direction.length_squared() > 0.001:
+			aim_direction = touch_aim_direction.normalized()
+	else:
+		var mouse_vector := get_global_mouse_position() - global_position
+		if mouse_vector.length_squared() > 1.0:
+			aim_direction = mouse_vector.normalized()
 
 	rotation = aim_direction.angle()
 	fire_cooldown = maxf(0.0, fire_cooldown - delta)
 
-	if (Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or Input.is_action_pressed("fire")) and fire_cooldown <= 0.0:
+	var wants_fire := touch_fire_active if touch_controls_enabled else (Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or Input.is_action_pressed("fire"))
+	if wants_fire and fire_cooldown <= 0.0:
 		fire_cooldown = fire_interval
 		fired.emit(global_position + aim_direction * 28.0, aim_direction)
 
@@ -54,6 +63,31 @@ func set_move_speed(new_move_speed: float) -> void:
 func set_weapon_style(new_weapon_style: String) -> void:
 	weapon_style = new_weapon_style
 	queue_redraw()
+
+
+func set_touch_controls_enabled(enabled: bool) -> void:
+	touch_controls_enabled = enabled
+	if not enabled:
+		touch_move_vector = Vector2.ZERO
+		touch_fire_active = false
+
+
+func set_touch_move_vector(new_move_vector: Vector2) -> void:
+	touch_move_vector = new_move_vector.limit_length(1.0)
+
+
+func clear_touch_movement() -> void:
+	touch_move_vector = Vector2.ZERO
+
+
+func set_touch_aim_direction(new_aim_direction: Vector2, fire_active: bool = true) -> void:
+	if new_aim_direction.length_squared() > 0.001:
+		touch_aim_direction = new_aim_direction.normalized()
+	touch_fire_active = fire_active
+
+
+func stop_touch_aim() -> void:
+	touch_fire_active = false
 
 
 func _draw() -> void:
