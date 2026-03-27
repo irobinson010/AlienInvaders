@@ -58,6 +58,13 @@ func boost_progress(amount: float) -> void:
 	queue_redraw()
 
 
+func repair(amount: int) -> void:
+	if amount <= 0 or health <= 0:
+		return
+	health = mini(max_health, health + amount)
+	queue_redraw()
+
+
 func take_damage(amount: int) -> void:
 	health -= amount
 	if health <= 0:
@@ -112,3 +119,16 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2(-30.0, -90.0), Vector2(60.0 * health_ratio, 3.0)), Color8(246, 120, 88))
 	draw_line(Vector2(0.0, -58.0), Vector2(0.0, -118.0), beam_color, 4.0, true)
 	draw_circle(Vector2(0.0, -120.0), 10.0 + progress_ratio * 8.0, Color(1.0, 0.62, 0.34, 0.35))
+	if health < max_health and max_health > 0:
+		var bar_y := -52.0
+		var bar_w := 40.0
+		var bar_h := 4.0
+		var bar_x := -bar_w * 0.5
+		draw_rect(Rect2(Vector2(bar_x, bar_y), Vector2(bar_w, bar_h)), Color8(40, 36, 32, 180))
+		var ratio := clampf(float(health) / float(max_health), 0.0, 1.0)
+		var fill_color := Color8(92, 214, 92)
+		if ratio <= 0.25:
+			fill_color = Color8(214, 72, 62)
+		elif ratio <= 0.5:
+			fill_color = Color8(214, 196, 82)
+		draw_rect(Rect2(Vector2(bar_x + 1.0, bar_y + 1.0), Vector2((bar_w - 2.0) * ratio, bar_h - 2.0)), fill_color)

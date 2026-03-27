@@ -25,6 +25,13 @@ var path_rank := 0
 var salvage_counter := 0
 var collar_color := Color8(214, 188, 118)
 var bark_flash := 0.0
+var sniff_range := 0.0
+var sniff_cooldown := 0.0
+var main_ref: Node
+var command_position: Vector2 = Vector2.ZERO
+var command_active := false
+var command_timer := 0.0
+const COMMAND_DURATION := 5.0
 
 
 func _ready() -> void:
@@ -43,6 +50,16 @@ func set_player(new_player: CharacterBody2D) -> void:
 	player_ref = new_player
 
 
+func set_main_ref(ref: Node) -> void:
+	main_ref = ref
+
+
+func set_command_point(world_position: Vector2) -> void:
+	command_position = world_position
+	command_active = true
+	command_timer = COMMAND_DURATION
+
+
 func apply_path_rank(new_path_kind: int, new_path_rank: int) -> void:
 	path_kind = new_path_kind
 	path_rank = new_path_rank
@@ -54,6 +71,7 @@ func apply_path_rank(new_path_kind: int, new_path_rank: int) -> void:
 	bite_cooldown_time = 0.95
 	bark_range = 0.0
 	bark_stun_duration = 0.0
+	sniff_range = 0.0
 	collar_color = Color8(214, 188, 118)
 
 	match path_kind:
@@ -72,6 +90,7 @@ func apply_path_rank(new_path_kind: int, new_path_rank: int) -> void:
 			follow_speed = 282.0
 			detection_range = 220.0
 			collar_color = Color8(107, 192, 226)
+			sniff_range = 140.0 + float(path_rank - 1) * 30.0
 
 	queue_redraw()
 
@@ -106,8 +125,15 @@ func _physics_process(delta: float) -> void:
 	if bark_flash > 0.0:
 		bark_flash = maxf(0.0, bark_flash - delta)
 		queue_redraw()
+	if command_active:
+		queue_redraw()
 	if target != null and not is_instance_valid(target):
 		target = null
+
+	if path_kind == PATCH_SCOUT and sniff_range > 0.0:
+		sniff_cooldown = maxf(0.0, sniff_cooldown - delta)
+		if sniff_cooldown <= 0.0:
+			_try_scout_sniff()
 
 	if target == null:
 		target = _find_target()
@@ -115,6 +141,15 @@ func _physics_process(delta: float) -> void:
 	var follow_anchor: Vector2 = player_ref.global_position + Vector2(-38.0, 26.0).rotated(player_ref.rotation)
 	var move_vector: Vector2 = follow_anchor - global_position
 	var move_speed: float = follow_speed
+
+	if command_active:
+		command_timer -= delta
+		if command_timer <= 0.0:
+			command_active = false
+		elif target == null:
+			move_vector = command_position - global_position
+			if move_vector.length() < 30.0:
+				move_vector = Vector2.ZERO
 
 	if target != null:
 		var chase_vector: Vector2 = target.global_position - global_position
@@ -146,7 +181,8 @@ func _try_guard_bark() -> void:
 		return
 
 	var stunned_any := false
-	for node in get_tree().get_nodes_in_group("aliens"):
+	var aliens: Array[Node] = main_ref.get_cached_aliens() if main_ref != null and main_ref.has_method("get_cached_aliens") else get_tree().get_nodes_in_group("aliens")
+	for node in aliens:
 		if node is Node2D:
 			var alien: Node2D = node
 			if global_position.distance_to(alien.global_position) <= bark_range and alien.has_method("apply_stun"):
@@ -160,11 +196,22 @@ func _try_guard_bark() -> void:
 		queue_redraw()
 
 
+func _try_scout_sniff() -> void:
+	for node in get_tree().get_nodes_in_group("scout_caches"):
+		if node is Node2D and node.has_method("is_hidden") and node.is_hidden():
+			if global_position.distance_to(node.global_position) <= sniff_range:
+				node.reveal()
+				sniff_cooldown = 1.5
+				barked.emit(global_position)
+				return
+
+
 func _find_target() -> Node2D:
 	var best_target: Node2D
 	var best_distance_sq: float = detection_range * detection_range
 
-	for node in get_tree().get_nodes_in_group("aliens"):
+	var aliens: Array[Node] = main_ref.get_cached_aliens() if main_ref != null and main_ref.has_method("get_cached_aliens") else get_tree().get_nodes_in_group("aliens")
+	for node in aliens:
 		if node is Node2D:
 			var alien: Node2D = node
 			var distance_sq: float = global_position.distance_squared_to(alien.global_position)
@@ -189,3 +236,13 @@ func _draw() -> void:
 	draw_colored_polygon(PackedVector2Array([Vector2(5.0, -10.0), Vector2(10.0, -24.0), Vector2(14.0, -9.0)]), Color8(120, 80, 48))
 	draw_colored_polygon(PackedVector2Array([Vector2(14.0, -9.0), Vector2(20.0, -23.0), Vector2(22.0, -8.0)]), Color8(120, 80, 48))
 	draw_circle(Vector2(0.0, -8.0), 4.0, collar_color)
+	if path_kind == PATCH_SCOUT and sniff_range > 0.0:
+		var sniff_alpha := 0.12 + (sin(Time.get_ticks_msec() * 0.004) + 1.0) * 0.06
+		draw_arc(Vector2.ZERO, sniff_range * 0.15, -0.4, 0.4, 12, Color(0.42, 0.75, 0.89, sniff_alpha), 2.0, true)
+	if command_active:
+		var cmd_local := command_position - global_position
+		var cmd_dist := cmd_local.length()
+		if cmd_dist > 30.0:
+			var cmd_dir := cmd_local.normalized()
+			var indicator_pos := cmd_dir * minf(40.0, cmd_dist)
+			draw_circle(indicator_pos, 4.0, Color(0.9, 0.8, 0.4, 0.5))

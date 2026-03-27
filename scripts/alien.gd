@@ -23,6 +23,7 @@ var enemy_kind := KIND_SCOUT
 var farmhouse_damage := 1
 var drill_progress_boost := 0.0
 var body_radius := 20.0
+var max_health := 2
 var targets_drill_site := false
 var attack_range := 0.0
 var attack_interval := 1.45
@@ -110,6 +111,7 @@ func configure(spawn_position: Vector2, goal_position: Vector2, current_wave: in
 			drill_progress_boost = 0.0
 			body_radius = 20.0
 
+	max_health = health
 	queue_redraw()
 
 
@@ -144,6 +146,8 @@ func _physics_process(delta: float) -> void:
 	var offset := target_position - global_position
 	if enemy_kind == KIND_HARRIER and not targets_drill_site:
 		attack_cooldown = maxf(0.0, attack_cooldown - delta * signal_boost_multiplier)
+		if global_position.y < 120.0:
+			global_position.y = lerpf(global_position.y, 120.0, delta * 3.0)
 		if offset.length() <= attack_range:
 			velocity = Vector2.ZERO
 			rotation = offset.angle()
@@ -165,6 +169,14 @@ func _physics_process(delta: float) -> void:
 			drill_site_reached.emit(drill_progress_boost)
 		elif active_barricade != null and is_instance_valid(active_barricade):
 			active_barricade.take_damage(farmhouse_damage)
+			if active_barricade.has_method("get_contact_damage"):
+				var barb_damage: int = active_barricade.get_contact_damage()
+				if barb_damage > 0:
+					health -= barb_damage
+					if health <= 0:
+						destroyed.emit(scrap_value, global_position)
+						queue_free()
+						return
 		elif target_structure_id != "":
 			structure_hit.emit(target_structure_id, farmhouse_damage)
 		else:
@@ -188,6 +200,7 @@ func take_damage(amount: int) -> void:
 		queue_free()
 	else:
 		damaged.emit(global_position, enemy_kind)
+		queue_redraw()
 
 
 func take_projectile_damage(amount: int, attack_from_direction: Vector2) -> void:
@@ -266,6 +279,11 @@ func _draw() -> void:
 				Vector2(-8.0, body_radius + 18.0),
 				Vector2(8.0, body_radius + 18.0)
 			]), Color8(119, 129, 140))
+			draw_colored_polygon(PackedVector2Array([
+				Vector2(0.0, -(body_radius - 4.0)),
+				Vector2(-6.0, -(body_radius + 14.0)),
+				Vector2(6.0, -(body_radius + 14.0))
+			]), Color8(119, 129, 140))
 			draw_line(Vector2(-16.0, 6.0), Vector2(-30.0, 18.0), Color8(214, 112, 74), 5.0, true)
 			draw_line(Vector2(16.0, 6.0), Vector2(30.0, 18.0), Color8(214, 112, 74), 5.0, true)
 		KIND_HARRIER:
@@ -312,6 +330,9 @@ func _draw() -> void:
 			draw_line(Vector2(6.0, -4.0), Vector2(18.0, -12.0), Color8(198, 184, 120), 3.0, true)
 			draw_line(Vector2(-14.0, 10.0), Vector2(-26.0, 18.0), Color8(92, 68, 48), 4.0, true)
 			draw_line(Vector2(14.0, 10.0), Vector2(26.0, 18.0), Color8(92, 68, 48), 4.0, true)
+			draw_line(Vector2(-10.0, 14.0), Vector2(-22.0, 26.0), Color8(148, 120, 78, 120), 3.0, true)
+			draw_line(Vector2(10.0, 14.0), Vector2(22.0, 26.0), Color8(148, 120, 78, 120), 3.0, true)
+			draw_line(Vector2(0.0, 16.0), Vector2(0.0, 30.0), Color8(148, 120, 78, 80), 2.0, true)
 		_:
 			draw_circle(Vector2.ZERO, body_radius, Color8(129, 238, 126))
 			draw_circle(Vector2(-8.0, -4.0), 5.0, Color8(33, 42, 27))
@@ -320,8 +341,31 @@ func _draw() -> void:
 			draw_line(Vector2(-20.0, 8.0), Vector2(-32.0, 18.0), Color8(129, 238, 126), 4.0, true)
 			draw_line(Vector2(20.0, 8.0), Vector2(32.0, 18.0), Color8(129, 238, 126), 4.0, true)
 	if stun_timer > 0.0:
-		draw_arc(Vector2.ZERO, 28.0, -0.6, 0.6, 18, Color8(145, 214, 255), 4.0, true)
-		draw_arc(Vector2.ZERO, 34.0, 2.54, 3.74, 18, Color8(145, 214, 255), 4.0, true)
+		var stun_pulse := (sin(Time.get_ticks_msec() * 0.012) + 1.0) * 0.5
+		var stun_alpha := lerpf(0.5, 0.9, stun_pulse)
+		var stun_color := Color(0.57, 0.84, 1.0, stun_alpha)
+		draw_arc(Vector2.ZERO, body_radius + 6.0, -0.8, 0.8, 18, stun_color, 4.0, true)
+		draw_arc(Vector2.ZERO, body_radius + 6.0, PI - 0.8, PI + 0.8, 18, stun_color, 4.0, true)
+		draw_arc(Vector2.ZERO, body_radius + 12.0, -0.5, 0.5, 14, Color(stun_color.r, stun_color.g, stun_color.b, stun_alpha * 0.4), 3.0, true)
+		draw_arc(Vector2.ZERO, body_radius + 12.0, PI - 0.5, PI + 0.5, 14, Color(stun_color.r, stun_color.g, stun_color.b, stun_alpha * 0.4), 3.0, true)
+		# Stun stars
+		for star_i in range(3):
+			var star_angle := float(star_i) * TAU / 3.0 + Time.get_ticks_msec() * 0.003
+			var star_pos := Vector2(cos(star_angle), sin(star_angle)) * (body_radius + 8.0)
+			draw_circle(star_pos, 2.5, Color(1.0, 1.0, 0.7, stun_alpha * 0.8))
 	if signal_boost_timer > 0.0:
 		draw_arc(Vector2.ZERO, body_radius + 12.0, -PI, PI, 28, Color8(203, 152, 255), 3.0, true)
 		draw_arc(Vector2.ZERO, body_radius + 18.0, -PI * 0.85, PI * 0.15, 24, Color8(126, 228, 255), 2.0, true)
+	if health < max_health and max_health > 0:
+		var bar_y := -(body_radius + 12.0)
+		var bar_w := 30.0
+		var bar_h := 4.0
+		var bar_x := -bar_w * 0.5
+		draw_rect(Rect2(Vector2(bar_x, bar_y), Vector2(bar_w, bar_h)), Color8(40, 36, 32, 180))
+		var ratio := clampf(float(health) / float(max_health), 0.0, 1.0)
+		var fill_color := Color8(92, 214, 92)
+		if ratio <= 0.25:
+			fill_color = Color8(214, 72, 62)
+		elif ratio <= 0.5:
+			fill_color = Color8(214, 196, 82)
+		draw_rect(Rect2(Vector2(bar_x + 1.0, bar_y + 1.0), Vector2((bar_w - 2.0) * ratio, bar_h - 2.0)), fill_color)

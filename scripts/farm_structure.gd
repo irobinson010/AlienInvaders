@@ -35,6 +35,8 @@ func _physics_process(delta: float) -> void:
 	if hit_flash > 0.0:
 		hit_flash = maxf(0.0, hit_flash - delta)
 		queue_redraw()
+	elif not destroyed_state and get_health_ratio() < 0.25:
+		queue_redraw()
 
 
 func take_damage(amount: int) -> void:
@@ -85,7 +87,43 @@ func _draw() -> void:
 		_:
 			_draw_barn()
 
+	_draw_damage_overlay()
 	_draw_health_bar()
+
+
+func _draw_damage_overlay() -> void:
+	var health_ratio := get_health_ratio()
+	if destroyed_state or health_ratio >= 1.0:
+		return
+
+	# Determine overlay radius based on structure type
+	var overlay_radius := 40.0
+	match structure_type:
+		TYPE_POWER_SHED:
+			overlay_radius = 36.0
+		TYPE_SILO:
+			overlay_radius = 30.0
+		_:
+			overlay_radius = 44.0
+
+	# Cracks appear below 75% health
+	if health_ratio < 0.75:
+		var crack_color := Color8(62, 48, 38, 160)
+		draw_line(Vector2(-8.0, -12.0), Vector2(4.0, 6.0), crack_color, 2.0, true)
+		draw_line(Vector2(6.0, -8.0), Vector2(-2.0, 10.0), crack_color, 2.0, true)
+
+	# More cracks and darkening below 50%
+	if health_ratio < 0.5:
+		var dark_overlay := Color(0.0, 0.0, 0.0, 0.15)
+		draw_circle(Vector2.ZERO, overlay_radius, dark_overlay)
+		draw_line(Vector2(-14.0, -4.0), Vector2(8.0, 14.0), Color8(52, 38, 28, 180), 2.5, true)
+		draw_line(Vector2(10.0, -14.0), Vector2(-6.0, 4.0), Color8(52, 38, 28, 180), 2.0, true)
+
+	# Critical state below 25% - red tint and sparks
+	if health_ratio < 0.25:
+		var pulse := (sin(Time.get_ticks_msec() * 0.005) + 1.0) * 0.5
+		var critical_color := Color(0.9, 0.2, 0.1, lerpf(0.08, 0.2, pulse))
+		draw_circle(Vector2.ZERO, overlay_radius + 2.0, critical_color)
 
 
 func _draw_health_bar() -> void:

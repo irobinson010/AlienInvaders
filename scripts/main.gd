@@ -30,112 +30,9 @@ const FARM_STRUCTURE_DEFS := {
 const BARN_SURVIVAL_BONUS := 2
 const POWER_SHED_FIRE_PENALTY := 1.30
 const SILO_DAMAGE_PENALTY := 1
-const ACT_ONE_WAVES = [
-	{
-		"title": "Act 1: First Contact",
-		"story": "Strange lights sweep over the corn. Eli grabs his barn-built nailgun while Patch circles the porch, waiting for the first landing.",
-		"objective": "Hold the north fence against 6 scout saucers.",
-		"spawn_count": 6,
-		"driller_count": 0,
-		"harrier_count": 0,
-		"spawn_interval": 1.95,
-		"start_delay": 0.80,
-		"spawn_mode": "top",
-	},
-	{
-		"title": "Wave 2: Fence Breakers",
-		"story": "The first wrecks are still smoking. Patch takes on a real job while a second alien rush lines up over the field, and a few raiders angle straight toward the farm's power shed.",
-		"objective": "Stop 8 raiders, including the first driller brute, and keep the power shed online.",
-		"spawn_count": 8,
-		"driller_count": 1,
-		"harrier_count": 0,
-		"structure_raids": [{"id":"power_shed", "count":2}],
-		"spawn_interval": 1.75,
-		"start_delay": 0.75,
-		"spawn_mode": "mixed",
-	},
-	{
-		"title": "Wave 3: Drill Team",
-		"story": "The invaders stop probing and start drilling. A real rig unfolds in the north field while driller aliens sprint to feed it power.",
-		"objective": "Destroy the north-field drill rig and break 10 attackers before it breaches the field.",
-		"spawn_count": 10,
-		"driller_count": 2,
-		"harrier_count": 0,
-		"drill_site": true,
-		"drill_rate": 2.30,
-		"drill_health": 10,
-		"spawn_interval": 1.50,
-		"start_delay": 0.70,
-		"spawn_mode": "sides",
-	},
-	{
-		"title": "Wave 4: North Field Signal",
-		"story": "Crop circles are no longer random. The whole north field lines up around a relay mast dropped over something buried deep below the roots while blue harriers start firing from above the rows and scouts slash toward Eli's barn workshop.",
-		"objective": "Destroy the signal relay, clear 12 invaders, and keep the barn workshop standing.",
-		"spawn_count": 12,
-		"driller_count": 2,
-		"harrier_count": 2,
-		"structure_raids": [{"id":"barn", "count":3}],
-		"relay_trigger_spawned": 5,
-		"relay_position": Vector2(316.0, 250.0),
-		"relay_health": 8,
-		"relay_interval": 5.30,
-		"relay_boost_multiplier": 1.25,
-		"relay_boost_duration": 3.00,
-		"relay_drill_boost": 0.0,
-		"relay_scrap": 5,
-		"spawn_interval": 1.30,
-		"start_delay": 0.70,
-		"spawn_mode": "top",
-	},
-	{
-		"title": "Wave 5: Harvester Approach",
-		"story": "More lights peel off the mothership. A second relay slams down near the silo while shield drones start screening the rush, burrowers cut under the fence, harriers strafe the farmhouse, and raiders split off toward the silo and power shed.",
-		"objective": "Smash the new signal relay, crack the shield drones, catch the first burrowers, hold off 14 attackers, and stop the silo and power shed from falling.",
-		"spawn_count": 14,
-		"driller_count": 3,
-		"harrier_count": 3,
-		"shield_count": 2,
-		"burrower_count": 2,
-		"structure_raids": [{"id":"silo", "count":3}, {"id":"power_shed", "count":2}],
-		"relay_trigger_spawned": 6,
-		"relay_position": Vector2(980.0, 254.0),
-		"relay_health": 9,
-		"relay_interval": 4.90,
-		"relay_boost_multiplier": 1.30,
-		"relay_boost_duration": 3.20,
-		"relay_drill_boost": 0.0,
-		"relay_scrap": 6,
-		"spawn_interval": 1.10,
-		"start_delay": 0.65,
-		"spawn_mode": "mixed",
-	},
-	{
-		"title": "Wave 6: Final Stand At The Silo",
-		"story": "Everything comes in at once. A command drill rig locks onto the signal under the field while shield drones screen the final relay, burrowers tunnel in under the lane, and raiders break for the barn, silo, and power shed under harrier fire.",
-		"objective": "Smash the command drill rig and final relay, break the shield screen, stop the tunneling rush, survive 16 attackers, and keep the barn, silo, and power shed alive.",
-		"spawn_count": 16,
-		"driller_count": 4,
-		"harrier_count": 4,
-		"shield_count": 3,
-		"burrower_count": 3,
-		"drill_site": true,
-		"drill_rate": 3.10,
-		"drill_health": 14,
-		"structure_raids": [{"id":"barn", "count":2}, {"id":"power_shed", "count":2}, {"id":"silo", "count":2}],
-		"relay_trigger_spawned": 7,
-		"relay_position": Vector2(980.0, 302.0),
-		"relay_health": 10,
-		"relay_interval": 4.50,
-		"relay_boost_multiplier": 1.35,
-		"relay_boost_duration": 3.50,
-		"relay_drill_boost": 6.5,
-		"relay_scrap": 7,
-		"spawn_interval": 0.92,
-		"start_delay": 0.60,
-		"spawn_mode": "mixed",
-	},
-]
+const _WaveData = preload("res://scripts/wave_data.gd")
+const ACT_ONE_WAVES = _WaveData.ACT_ONE_WAVES
+
 
 const PLAYER_SCENE := preload("res://scenes/player.tscn")
 const DOG_SCENE := preload("res://scenes/dog.tscn")
@@ -143,14 +40,20 @@ const ALIEN_SCENE := preload("res://scenes/alien.tscn")
 const FARM_STRUCTURE_SCENE := preload("res://scenes/farm_structure.tscn")
 const DRILL_RIG_SCENE := preload("res://scenes/drill_rig.tscn")
 const SIGNAL_RELAY_SCENE := preload("res://scenes/signal_relay.tscn")
+const ACT2_OBJECTIVE_SCENE := preload("res://scenes/act2_objective.tscn")
+const BOSS_OVERSEER_SCENE := preload("res://scenes/boss_overseer.tscn")
 const FIELD_SIGNAL_SCENE := preload("res://scenes/field_signal.tscn")
 const ROCKET_TRACTOR_SCENE := preload("res://scenes/rocket_tractor.tscn")
 const BULLET_SCENE := preload("res://scenes/bullet.tscn")
+const DEATH_BURST_SCENE := preload("res://scenes/death_burst.tscn")
 const ENEMY_BOLT_SCENE := preload("res://scenes/enemy_bolt.tscn")
 const TURRET_SCENE := preload("res://scenes/turret.tscn")
 const SHOCK_POST_SCENE := preload("res://scenes/shock_post.tscn")
 const BARRICADE_SCENE := preload("res://scenes/barricade.tscn")
 const BUILD_SPOT_SCENE := preload("res://scenes/build_spot.tscn")
+const SCOUT_CACHE_SCENE := preload("res://scenes/scout_cache.tscn")
+const DAMAGE_NUMBER_SCENE := preload("res://scenes/damage_number.tscn")
+const AUDIO_MANAGER_SCENE := preload("res://scripts/audio_manager.gd")
 const MUSIC_FARM_DEFENSE_LOOP := preload("res://assets/audio/music/music_farm_defense_loop.ogg")
 const MUSIC_WAVE_WARNING_STING := preload("res://assets/audio/music/music_wave_warning_sting.ogg")
 const SFX_WEAPON_LASER_PEW := preload("res://assets/audio/sfx/sfx_weapon_laser_pew.wav")
@@ -182,6 +85,8 @@ var player: CharacterBody2D
 var dog: CharacterBody2D
 var current_drill_site: StaticBody2D
 var current_signal_relay: StaticBody2D
+var current_act_two_objectives: Array[StaticBody2D] = []
+var current_wave_boss: CharacterBody2D
 var field_signal: Node2D
 var rocket_tractor
 var top_panel: ColorRect
@@ -283,6 +188,10 @@ var scrap_blaster_fire_interval := 0.54
 var tractor_cannon_unlocked := false
 var tractor_cannon_fire_interval := 0.74
 var rocket_tractor_unlocked := false
+var rocket_tractor_patrol_speed := 84.0
+var rocket_tractor_fire_interval := 2.8
+var rocket_tractor_damage := 5
+var rocket_tractor_rocket_speed := 470.0
 var turret_damage := 1
 var turret_fire_interval := 0.80
 var turret_cost := BASE_TURRET_COST
@@ -311,17 +220,56 @@ var current_wave_spawn_interval := 1.50
 var current_wave_start_delay := 0.80
 var current_wave_spawn_mode := "mixed"
 var relay_spawned_for_wave := false
+var boss_spawned_for_wave := false
+var boss_target_cycle := 0
 var shield_warning_sent := false
 var burrower_warning_sent := false
+var driller_warning_sent := false
+var harrier_warning_sent := false
 var structure_raid_pool: Array[String] = []
 var structure_raid_notice_sent := false
 var pending_upgrade_choices: Array[Dictionary] = []
 var pending_upgrade_wave_index := -1
 var pending_transition_text := ""
+var wave_clear_pending := false
+var wave_clear_farm_text := ""
+
+# Audio manager
+var audio_manager: Node
+
+# Group cache
+var cached_aliens: Array[Node] = []
+var cached_barricades: Array[Node] = []
+var _aliens_dirty := true
+var _barricades_dirty := true
+
+# Farm penalty visual state
+var power_penalty_visual_active := false
+var silo_penalty_visual_active := false
+var penalty_pulse_time := 0.0
+
+# Scout cache
+var active_scout_caches: Array[Node2D] = []
+
+# Act 2 expansion
+var excavation_depth := 0.0
+const EXCAVATION_MAX := 100.0
+var dawn_progress := 0.0
+
+# Screen shake
+var shake_intensity := 0.0
+var shake_decay := 8.0
+
+# Combo kill streak
+var combo_count := 0
+var combo_timer := 0.0
+const COMBO_WINDOW := 2.0
 
 
 func _ready() -> void:
 	randomize()
+	audio_manager = AUDIO_MANAGER_SCENE.new()
+	add_child(audio_manager)
 	_setup_ui()
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	_setup_timers()
@@ -336,6 +284,49 @@ func _ready() -> void:
 	_update_stats()
 	_show_title_screen()
 	queue_redraw()
+
+
+func _physics_process(delta: float) -> void:
+	if _aliens_dirty:
+		cached_aliens = get_tree().get_nodes_in_group("aliens")
+		_aliens_dirty = false
+	if _barricades_dirty:
+		cached_barricades = get_tree().get_nodes_in_group("barricades")
+		_barricades_dirty = false
+	penalty_pulse_time += delta
+	if wave_active and _act_two_active() and current_wave_index == ACT_ONE_WAVES.size() - 1:
+		dawn_progress = minf(1.0, dawn_progress + delta * 0.012)
+		queue_redraw()
+	if shake_intensity > 0.01:
+		shake_intensity = maxf(0.0, shake_intensity - shake_decay * delta)
+		position = Vector2(randf_range(-shake_intensity, shake_intensity), randf_range(-shake_intensity, shake_intensity))
+	elif position != Vector2.ZERO:
+		position = Vector2.ZERO
+	if combo_timer > 0.0:
+		combo_timer = maxf(0.0, combo_timer - delta)
+		if combo_timer <= 0.0 and combo_count >= 3:
+			_set_banner("Streak ended at %d kills." % combo_count, 1.5)
+			combo_count = 0
+		elif combo_timer <= 0.0:
+			combo_count = 0
+	if wave_active and audio_manager != null:
+		audio_manager.set_combat_intensity(_live_threat_count(), wave_total_spawns)
+
+
+func get_cached_aliens() -> Array[Node]:
+	return cached_aliens
+
+
+func get_cached_barricades() -> Array[Node]:
+	return cached_barricades
+
+
+func mark_aliens_dirty() -> void:
+	_aliens_dirty = true
+
+
+func mark_barricades_dirty() -> void:
+	_barricades_dirty = true
 
 
 func _setup_ui() -> void:
@@ -430,31 +421,34 @@ func _setup_title_panel(canvas_layer: CanvasLayer) -> void:
 	title_body_label.modulate = Color8(239, 232, 213)
 	content.add_child(title_body_label)
 
-	var buttons_row: HBoxContainer = HBoxContainer.new()
-	buttons_row.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	buttons_row.add_theme_constant_override("separation", 14)
-	content.add_child(buttons_row)
+	var buttons_col: VBoxContainer = VBoxContainer.new()
+	buttons_col.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	buttons_col.add_theme_constant_override("separation", 8)
+	content.add_child(buttons_col)
 
 	title_auto_button = Button.new()
-	title_auto_button.text = "Auto"
-	title_auto_button.custom_minimum_size = Vector2(248.0, 56.0)
+	title_auto_button.text = "Auto — desktop by default, switches to touch on screen tap"
+	title_auto_button.custom_minimum_size = Vector2(0.0, 48.0)
+	title_auto_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_auto_button.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	title_auto_button.pressed.connect(_on_control_mode_selected.bind(ControlMode.AUTO))
-	buttons_row.add_child(title_auto_button)
+	buttons_col.add_child(title_auto_button)
 
 	title_desktop_button = Button.new()
-	title_desktop_button.text = "Desktop"
-	title_desktop_button.custom_minimum_size = Vector2(248.0, 56.0)
+	title_desktop_button.text = "Desktop — keyboard movement, mouse aim"
+	title_desktop_button.custom_minimum_size = Vector2(0.0, 48.0)
+	title_desktop_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_desktop_button.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	title_desktop_button.pressed.connect(_on_control_mode_selected.bind(ControlMode.DESKTOP))
-	buttons_row.add_child(title_desktop_button)
+	buttons_col.add_child(title_desktop_button)
 
 	title_touch_button = Button.new()
-	title_touch_button.text = "Touch"
-	title_touch_button.custom_minimum_size = Vector2(248.0, 56.0)
+	title_touch_button.text = "Touch — on-screen pads for phones and tablets"
+	title_touch_button.custom_minimum_size = Vector2(0.0, 48.0)
+	title_touch_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_touch_button.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	title_touch_button.pressed.connect(_on_control_mode_selected.bind(ControlMode.TOUCH))
-	buttons_row.add_child(title_touch_button)
+	buttons_col.add_child(title_touch_button)
 
 	title_footer_label = Label.new()
 	title_footer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -464,8 +458,8 @@ func _setup_title_panel(canvas_layer: CanvasLayer) -> void:
 
 func _setup_briefing_panel(canvas_layer: CanvasLayer) -> void:
 	briefing_panel = PanelContainer.new()
-	briefing_panel.position = Vector2(214.0, 124.0)
-	briefing_panel.size = Vector2(852.0, 356.0)
+	briefing_panel.position = Vector2(214.0, 40.0)
+	briefing_panel.size = Vector2(852.0, 640.0)
 	briefing_panel.visible = false
 	briefing_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	briefing_panel.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
@@ -484,12 +478,18 @@ func _setup_briefing_panel(canvas_layer: CanvasLayer) -> void:
 	panel_style.corner_radius_bottom_right = 12
 	briefing_panel.add_theme_stylebox_override("panel", panel_style)
 
+	var scroll := ScrollContainer.new()
+	scroll.position = Vector2(8.0, 8.0)
+	scroll.size = Vector2(836.0, 624.0)
+	scroll.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	briefing_panel.add_child(scroll)
+
 	var content: VBoxContainer = VBoxContainer.new()
-	content.position = Vector2(26.0, 22.0)
-	content.size = Vector2(800.0, 310.0)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	content.add_theme_constant_override("separation", 14)
-	briefing_panel.add_child(content)
+	content.add_theme_constant_override("separation", 10)
+	scroll.add_child(content)
 
 	briefing_title_label = Label.new()
 	briefing_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -518,8 +518,8 @@ func _setup_briefing_panel(canvas_layer: CanvasLayer) -> void:
 
 func _setup_upgrade_panel(canvas_layer: CanvasLayer) -> void:
 	upgrade_panel = PanelContainer.new()
-	upgrade_panel.position = Vector2(208.0, 116.0)
-	upgrade_panel.size = Vector2(864.0, 372.0)
+	upgrade_panel.position = Vector2(208.0, 56.0)
+	upgrade_panel.size = Vector2(864.0, 608.0)
 	upgrade_panel.visible = false
 	upgrade_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	upgrade_panel.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
@@ -538,12 +538,18 @@ func _setup_upgrade_panel(canvas_layer: CanvasLayer) -> void:
 	panel_style.corner_radius_bottom_right = 12
 	upgrade_panel.add_theme_stylebox_override("panel", panel_style)
 
+	var scroll := ScrollContainer.new()
+	scroll.position = Vector2(8.0, 8.0)
+	scroll.size = Vector2(848.0, 592.0)
+	scroll.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	upgrade_panel.add_child(scroll)
+
 	var content: VBoxContainer = VBoxContainer.new()
-	content.position = Vector2(24.0, 20.0)
-	content.size = Vector2(816.0, 326.0)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	content.add_theme_constant_override("separation", 12)
-	upgrade_panel.add_child(content)
+	content.add_theme_constant_override("separation", 10)
+	scroll.add_child(content)
 
 	upgrade_title_label = Label.new()
 	upgrade_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -551,33 +557,33 @@ func _setup_upgrade_panel(canvas_layer: CanvasLayer) -> void:
 	content.add_child(upgrade_title_label)
 
 	upgrade_body_label = Label.new()
-	upgrade_body_label.size = Vector2(816.0, 138.0)
 	upgrade_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	upgrade_body_label.modulate = Color8(239, 232, 213)
 	content.add_child(upgrade_body_label)
 
-	var buttons_row: HBoxContainer = HBoxContainer.new()
-	buttons_row.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	buttons_row.add_theme_constant_override("separation", 14)
-	content.add_child(buttons_row)
-
 	upgrade_button_a = Button.new()
-	upgrade_button_a.custom_minimum_size = Vector2(250.0, 90.0)
+	upgrade_button_a.custom_minimum_size = Vector2(0.0, 64.0)
+	upgrade_button_a.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	upgrade_button_a.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	upgrade_button_a.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	upgrade_button_a.pressed.connect(_on_upgrade_selected.bind(0))
-	buttons_row.add_child(upgrade_button_a)
+	content.add_child(upgrade_button_a)
 
 	upgrade_button_b = Button.new()
-	upgrade_button_b.custom_minimum_size = Vector2(250.0, 90.0)
+	upgrade_button_b.custom_minimum_size = Vector2(0.0, 64.0)
+	upgrade_button_b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	upgrade_button_b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	upgrade_button_b.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	upgrade_button_b.pressed.connect(_on_upgrade_selected.bind(1))
-	buttons_row.add_child(upgrade_button_b)
+	content.add_child(upgrade_button_b)
 
 	upgrade_button_c = Button.new()
-	upgrade_button_c.custom_minimum_size = Vector2(250.0, 90.0)
+	upgrade_button_c.custom_minimum_size = Vector2(0.0, 64.0)
+	upgrade_button_c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	upgrade_button_c.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	upgrade_button_c.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	upgrade_button_c.pressed.connect(_on_upgrade_selected.bind(2))
-	buttons_row.add_child(upgrade_button_c)
+	content.add_child(upgrade_button_c)
 
 	upgrade_footer_label = Label.new()
 	upgrade_footer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -588,8 +594,8 @@ func _setup_upgrade_panel(canvas_layer: CanvasLayer) -> void:
 
 func _setup_patch_panel(canvas_layer: CanvasLayer) -> void:
 	patch_panel = PanelContainer.new()
-	patch_panel.position = Vector2(232.0, 140.0)
-	patch_panel.size = Vector2(816.0, 300.0)
+	patch_panel.position = Vector2(232.0, 40.0)
+	patch_panel.size = Vector2(816.0, 640.0)
 	patch_panel.visible = false
 	patch_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	patch_panel.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
@@ -608,12 +614,18 @@ func _setup_patch_panel(canvas_layer: CanvasLayer) -> void:
 	panel_style.corner_radius_bottom_right = 12
 	patch_panel.add_theme_stylebox_override("panel", panel_style)
 
+	var scroll := ScrollContainer.new()
+	scroll.position = Vector2(8.0, 8.0)
+	scroll.size = Vector2(800.0, 624.0)
+	scroll.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	patch_panel.add_child(scroll)
+
 	var content: VBoxContainer = VBoxContainer.new()
-	content.position = Vector2(24.0, 20.0)
-	content.size = Vector2(768.0, 260.0)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	content.add_theme_constant_override("separation", 12)
-	patch_panel.add_child(content)
+	content.add_theme_constant_override("separation", 10)
+	scroll.add_child(content)
 
 	patch_title_label = Label.new()
 	patch_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -627,31 +639,34 @@ func _setup_patch_panel(canvas_layer: CanvasLayer) -> void:
 	patch_body_label.modulate = Color8(239, 232, 213)
 	content.add_child(patch_body_label)
 
-	var buttons_row: HBoxContainer = HBoxContainer.new()
-	buttons_row.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	buttons_row.add_theme_constant_override("separation", 14)
-	content.add_child(buttons_row)
+	var buttons_col: VBoxContainer = VBoxContainer.new()
+	buttons_col.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
+	buttons_col.add_theme_constant_override("separation", 8)
+	content.add_child(buttons_col)
 
 	patch_scrap_button = Button.new()
-	patch_scrap_button.text = "Scrap Hound"
-	patch_scrap_button.custom_minimum_size = Vector2(240.0, 48.0)
+	patch_scrap_button.text = "Scrap Hound — better salvage and stronger scrap economy"
+	patch_scrap_button.custom_minimum_size = Vector2(0.0, 44.0)
+	patch_scrap_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	patch_scrap_button.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	patch_scrap_button.pressed.connect(_on_patch_path_selected.bind(PatchPath.SCRAP))
-	buttons_row.add_child(patch_scrap_button)
+	buttons_col.add_child(patch_scrap_button)
 
 	patch_guard_button = Button.new()
-	patch_guard_button.text = "Guard Dog"
-	patch_guard_button.custom_minimum_size = Vector2(240.0, 48.0)
+	patch_guard_button.text = "Guard Dog — stun bark and stronger lane control"
+	patch_guard_button.custom_minimum_size = Vector2(0.0, 44.0)
+	patch_guard_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	patch_guard_button.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	patch_guard_button.pressed.connect(_on_patch_path_selected.bind(PatchPath.GUARD))
-	buttons_row.add_child(patch_guard_button)
+	buttons_col.add_child(patch_guard_button)
 
 	patch_scout_button = Button.new()
-	patch_scout_button.text = "Scout Nose"
-	patch_scout_button.custom_minimum_size = Vector2(240.0, 48.0)
+	patch_scout_button.text = "Scout Nose — find buried caches and hidden upgrades"
+	patch_scout_button.custom_minimum_size = Vector2(0.0, 44.0)
+	patch_scout_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	patch_scout_button.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	patch_scout_button.pressed.connect(_on_patch_path_selected.bind(PatchPath.SCOUT))
-	buttons_row.add_child(patch_scout_button)
+	buttons_col.add_child(patch_scout_button)
 
 	patch_footer_label = Label.new()
 	patch_footer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -716,7 +731,7 @@ func _setup_pause_panel(canvas_layer: CanvasLayer) -> void:
 
 	pause_restart_button = Button.new()
 	pause_restart_button.custom_minimum_size = Vector2(240.0, 48.0)
-	pause_restart_button.text = "Restart Act 1"
+	pause_restart_button.text = "Restart Campaign"
 	pause_restart_button.process_mode = Node.PROCESS_MODE_WHEN_PAUSED
 	pause_restart_button.pressed.connect(_on_pause_restart_pressed)
 	action_row.add_child(pause_restart_button)
@@ -959,6 +974,7 @@ func _show_title_screen() -> void:
 	banner_label.text = banner_default
 	_apply_control_mode()
 	_refresh_support_units()
+	queue_redraw()
 	_update_hint()
 	_update_stats()
 
@@ -1351,10 +1367,15 @@ func _layout_ui() -> void:
 		hint_label.size = Vector2(maxf(360.0, viewport_size.x - 36.0), 22.0)
 	for panel in [title_panel, briefing_panel, upgrade_panel, patch_panel]:
 		if panel != null:
+			panel.size.x = minf(panel.size.x, viewport_size.x - 20.0)
+			panel.size.y = minf(panel.size.y, viewport_size.y - 20.0)
 			panel.position = (viewport_size - panel.size) * 0.5
 	if pause_panel != null:
+		pause_panel.size.x = minf(pause_panel.size.x, viewport_size.x - 20.0)
+		pause_panel.size.y = minf(pause_panel.size.y, viewport_size.y - 20.0)
 		pause_panel.position = (viewport_size - pause_panel.size) * 0.5
 	if prep_panel != null:
+		prep_panel.size.x = minf(prep_panel.size.x, viewport_size.x - 20.0)
 		prep_panel.position = Vector2((viewport_size.x - prep_panel.size.x) * 0.5, 86.0)
 	if player != null and is_instance_valid(player):
 		player.play_bounds = _current_play_bounds()
@@ -1422,6 +1443,7 @@ func _spawn_dog() -> void:
 	dog = DOG_SCENE.instantiate() as CharacterBody2D
 	dog.position = Vector2(596.0, 542.0)
 	dog.set_player(player)
+	dog.set_main_ref(self)
 	dog.barked.connect(_on_dog_barked)
 	dog.growled.connect(_on_dog_growled)
 	add_child(dog)
@@ -1440,7 +1462,7 @@ func _spawn_rocket_tractor() -> void:
 
 	rocket_tractor = ROCKET_TRACTOR_SCENE.instantiate()
 	rocket_tractor.position = Vector2(176.0, 402.0)
-	rocket_tractor.configure(BULLET_SCENE, 164.0, 1116.0, 84.0, 2.8, 5, 470.0)
+	rocket_tractor.configure(BULLET_SCENE, 164.0, 1116.0, rocket_tractor_patrol_speed, rocket_tractor_fire_interval, rocket_tractor_damage, rocket_tractor_rocket_speed)
 	rocket_tractor.rocket_launched.connect(_on_rocket_tractor_launched)
 	add_child(rocket_tractor)
 	_refresh_support_units()
@@ -1475,6 +1497,87 @@ func _spawn_build_spots() -> void:
 		build_spot.position = build_position
 		build_spot.build_requested.connect(_on_build_requested)
 		add_child(build_spot)
+
+
+func _spawn_scout_caches_for_wave(wave_index: int) -> void:
+	_clear_scout_caches()
+	if patch_path != PatchPath.SCOUT or patch_rank <= 0:
+		return
+
+	var cache_count := 1
+	if patch_rank >= 3:
+		cache_count = 2
+	elif patch_rank >= 2 and wave_index >= 3:
+		cache_count = 2
+
+	var reward_pool: Array[Dictionary] = []
+	match patch_rank:
+		1:
+			reward_pool = [
+				{"type":"scrap", "value":2},
+				{"type":"scrap", "value":3},
+			]
+		2:
+			reward_pool = [
+				{"type":"scrap", "value":3},
+				{"type":"fire_rate", "value":1},
+				{"type":"scrap", "value":2},
+			]
+		3:
+			reward_pool = [
+				{"type":"scrap", "value":4},
+				{"type":"fire_rate", "value":1},
+				{"type":"repair", "value":1},
+				{"type":"scrap", "value":3},
+			]
+
+	for _i in range(cache_count):
+		var cache_position := Vector2(
+			randf_range(180.0, 1100.0),
+			randf_range(290.0, 430.0)
+		)
+		if cache_position.distance_to(FARMHOUSE_POS) < 120.0:
+			cache_position.y -= 80.0
+		if cache_position.distance_to(DRILL_SITE_POS) < 100.0:
+			cache_position.x += 120.0
+
+		var reward: Dictionary = reward_pool[randi() % reward_pool.size()]
+		var cache: Node2D = SCOUT_CACHE_SCENE.instantiate() as Node2D
+		cache.position = cache_position
+		cache.configure(String(reward["type"]), int(reward["value"]))
+		cache.discovered.connect(_on_scout_cache_discovered)
+		add_child(cache)
+		active_scout_caches.append(cache)
+
+
+func _clear_scout_caches() -> void:
+	for cache in active_scout_caches:
+		if cache != null and is_instance_valid(cache):
+			cache.queue_free()
+	active_scout_caches.clear()
+
+
+func _on_scout_cache_discovered(reward_type: String, reward_value: int, world_position: Vector2) -> void:
+	if game_over:
+		return
+
+	match reward_type:
+		"scrap":
+			scrap += reward_value
+			_set_banner("Patch digs up a buried stash. +%d scrap." % reward_value, 2.0)
+		"fire_rate":
+			_apply_player_fire_rate_boost(0.02, 0.03)
+			_set_banner("Patch uncovers an alien power cell. Eli fires faster for a moment.", 2.2)
+		"repair":
+			var structure_id := _priority_structure_to_repair()
+			if structure_id != "":
+				_restore_farm_structure(structure_id)
+				_set_banner("Patch finds repair parts. The %s gets patched up." % _structure_display_name(structure_id), 2.4)
+			else:
+				base_health += 1
+				_set_banner("Patch finds sealed plating. Farmhouse gains 1 base.", 2.0)
+	_play_positional_sfx(SFX_DOG_BARK_ALERT, world_position, -11.0, 1.02, 1.10)
+	_update_stats()
 
 
 func _current_weapon_fire_interval() -> float:
@@ -1553,6 +1656,11 @@ func _refresh_player_weapon() -> void:
 
 	player.set_fire_interval(_current_weapon_fire_interval())
 	player.set_weapon_style(current_weapon_id)
+
+
+func _refresh_rocket_tractor_stats() -> void:
+	if rocket_tractor != null and is_instance_valid(rocket_tractor):
+		rocket_tractor.set_stats(rocket_tractor_patrol_speed, rocket_tractor_fire_interval, rocket_tractor_damage, rocket_tractor_rocket_speed)
 
 
 func _refresh_support_units() -> void:
@@ -1651,8 +1759,9 @@ func _show_briefing_for_wave(wave_index: int, transition_text: String = "") -> v
 	pause_panel.visible = false
 	get_tree().paused = true
 	banner_label.text = banner_default
-	_update_field_signal_state(wave, bool(wave_data.get("drill_site", false)) or wave_data.has("relay_trigger_spawned"))
+	_update_field_signal_state(wave, bool(wave_data.get("drill_site", false)) or wave_data.has("relay_trigger_spawned") or wave_data.has("act_two_nodes"))
 	_refresh_support_units()
+	queue_redraw()
 	_update_hint()
 	_update_stats()
 
@@ -1662,6 +1771,34 @@ func _compose_briefing_text(wave_data: Dictionary, transition_text: String) -> S
 	if transition_text != "":
 		briefing_text = transition_text + "\n\n" + briefing_text
 	briefing_text += "\n\nObjective: %s" % String(wave_data["objective"])
+
+	var roster_bits: Array[String] = []
+	var scout_count: int = int(wave_data["spawn_count"]) - int(wave_data["driller_count"]) - int(wave_data["harrier_count"]) - int(wave_data.get("shield_count", 0)) - int(wave_data.get("burrower_count", 0))
+	if scout_count > 0:
+		roster_bits.append("%d Scouts" % scout_count)
+	if int(wave_data["driller_count"]) > 0:
+		roster_bits.append("%d Drillers (heavy, feed rigs)" % int(wave_data["driller_count"]))
+	if int(wave_data["harrier_count"]) > 0:
+		roster_bits.append("%d Harriers (ranged flyers)" % int(wave_data["harrier_count"]))
+	if int(wave_data.get("shield_count", 0)) > 0:
+		roster_bits.append("%d Shield Drones (block frontal shots)" % int(wave_data.get("shield_count", 0)))
+	if int(wave_data.get("burrower_count", 0)) > 0:
+		roster_bits.append("%d Burrowers (ignore barricades)" % int(wave_data.get("burrower_count", 0)))
+
+	var extras: Array[String] = []
+	if wave_data.get("drill_site", false):
+		extras.append("Drill Rig (destroy before breach)")
+	if wave_data.has("relay_trigger_spawned"):
+		extras.append("Signal Relay (boosts all aliens)")
+	if wave_data.has("boss"):
+		extras.append("BOSS: %s" % String(wave_data["boss"].get("name", "Unknown")))
+	for obj in wave_data.get("act_two_nodes", []):
+		extras.append("%s (%s)" % [String(obj.get("name", "")), String(obj.get("kind", "")).replace("_", " ")])
+
+	briefing_text += "\n\nThreat Roster: %s." % ", ".join(roster_bits)
+	if not extras.is_empty():
+		briefing_text += "\nObjectives: %s." % ", ".join(extras)
+
 	return briefing_text
 
 
@@ -1670,6 +1807,24 @@ func _on_briefing_continue_pressed() -> void:
 	if mission_complete or game_over:
 		get_tree().paused = false
 		get_tree().reload_current_scene()
+		return
+
+	if wave_clear_pending:
+		wave_clear_pending = false
+		briefing_panel.visible = false
+
+		if current_wave_index == 0 and patch_path == PatchPath.NONE:
+			_show_patch_choice()
+			return
+
+		var next_wave_index: int = current_wave_index + 1
+		var transition_text: String = _prepare_transition_for_wave(next_wave_index + 1)
+		if wave_clear_farm_text != "":
+			if transition_text != "":
+				transition_text = wave_clear_farm_text + "\n\n" + transition_text
+			else:
+				transition_text = wave_clear_farm_text
+		_show_upgrade_panel(next_wave_index, transition_text)
 		return
 
 	briefing_panel.visible = false
@@ -1693,6 +1848,7 @@ func _enter_prep_phase(wave_index: int) -> void:
 	_refresh_prep_panel()
 	banner_label.text = banner_default
 	_refresh_support_units()
+	queue_redraw()
 	_update_hint()
 	_update_stats()
 
@@ -1751,21 +1907,30 @@ func _start_wave(wave_index: int) -> void:
 	wave_burrowers_remaining = int(wave_data.get("burrower_count", 0))
 	wave_spawned = 0
 	active_aliens = 0
+	combo_count = 0
+	combo_timer = 0.0
 	prep_phase_active = false
 	relay_spawned_for_wave = false
+	boss_spawned_for_wave = false
+	boss_target_cycle = 0
 	shield_warning_sent = false
 	burrower_warning_sent = false
+	driller_warning_sent = false
+	harrier_warning_sent = false
 	structure_raid_pool = _build_structure_raid_pool(wave_data)
 	structure_raid_notice_sent = false
 	_spawn_wave_objectives(wave_data)
+	_refresh_current_objective_text()
 	banner_default = _story_text_for_wave(wave)
 	_set_banner(banner_default, 3.0)
 	if music_sting_player != null and is_instance_valid(music_sting_player):
 		music_sting_player.play()
 	_update_field_signal_state(wave, _has_live_drill_site() or wave >= 4)
 	_refresh_support_units()
+	queue_redraw()
 	_update_hint()
 	_update_stats()
+	_spawn_scout_caches_for_wave(wave_index)
 	spawn_timer.start(current_wave_start_delay)
 
 
@@ -1804,23 +1969,30 @@ func _spawn_alien() -> void:
 	match enemy_kind:
 		"driller":
 			_play_positional_sfx(SFX_ALIEN_BRUTE_ROAR, spawn_position, -11.0, 0.94, 1.02)
+			if not driller_warning_sent:
+				driller_warning_sent = true
+				_set_banner("DRILLER: Heavy brute that feeds the drill rig. Kill it before it reaches the rig or it powers up the extraction.", 3.2)
 		"harrier":
 			_play_positional_sfx(SFX_ALIEN_CHITTER_IDLE, spawn_position, -18.0, 1.04, 1.10)
+			if not harrier_warning_sent:
+				harrier_warning_sent = true
+				_set_banner("HARRIER: Ranged flyer that shoots the farmhouse and structures from a distance. Move Eli to dodge its bolts.", 3.2)
 		"shield_drone":
 			_play_positional_sfx(SFX_ALIEN_CHITTER_IDLE, spawn_position, -16.0, 0.90, 0.98)
 			if not shield_warning_sent:
 				shield_warning_sent = true
-				_set_banner("Shield drone on the lane. Flank it or crack it with shock posts.", 2.4)
+				_set_banner("SHIELD DRONE: Blocks shots from the front. Flank it from the side, or use shock posts to strip the shield with EMP.", 3.2)
 		"burrower":
 			_play_positional_sfx(SFX_ALIEN_CHITTER_IDLE, spawn_position, -17.0, 0.82, 0.92)
 			if not burrower_warning_sent:
 				burrower_warning_sent = true
-				_set_banner("Burrower under the fence. They ignore barricades and go straight for the farm.", 2.4)
+				_set_banner("BURROWER: Tunnels under barricades and heads straight for the farm. Must be shot directly.", 3.2)
 		_:
 			if randf() <= 0.22:
 				_play_positional_sfx(SFX_ALIEN_CHITTER_IDLE, spawn_position, -20.0, 0.98, 1.08)
 	wave_spawned += 1
 	active_aliens += 1
+	mark_aliens_dirty()
 	_maybe_spawn_midwave_objective()
 	_update_stats()
 
@@ -1828,18 +2000,32 @@ func _spawn_alien() -> void:
 func _spawn_wave_objectives(wave_data: Dictionary) -> void:
 	current_drill_site = null
 	current_signal_relay = null
-	if not bool(wave_data.get("drill_site", false)):
-		return
+	current_act_two_objectives.clear()
+	current_wave_boss = null
+	if bool(wave_data.get("drill_site", false)):
+		var drill_rig: StaticBody2D = DRILL_RIG_SCENE.instantiate() as StaticBody2D
+		drill_rig.position = DRILL_SITE_POS
+		drill_rig.configure(int(wave_data["drill_health"]), float(wave_data["drill_rate"]), 4 + wave)
+		drill_rig.destroyed.connect(_on_drill_site_destroyed)
+		drill_rig.breached.connect(_on_drill_site_breached)
+		drill_rig.damaged.connect(_on_objective_damaged)
+		add_child(drill_rig)
+		current_drill_site = drill_rig
+		active_aliens += 1
+		mark_aliens_dirty()
+		_set_banner("DRILL RIG deployed. Drillers will feed it power. Destroy the rig before it breaches the field or you lose.", 3.5)
 
-	var drill_rig: StaticBody2D = DRILL_RIG_SCENE.instantiate() as StaticBody2D
-	drill_rig.position = DRILL_SITE_POS
-	drill_rig.configure(int(wave_data["drill_health"]), float(wave_data["drill_rate"]), 4 + wave)
-	drill_rig.destroyed.connect(_on_drill_site_destroyed)
-	drill_rig.breached.connect(_on_drill_site_breached)
-	drill_rig.damaged.connect(_on_objective_damaged)
-	add_child(drill_rig)
-	current_drill_site = drill_rig
-	active_aliens += 1
+	for objective_data in wave_data.get("act_two_nodes", []):
+		var act_two_objective: StaticBody2D = ACT2_OBJECTIVE_SCENE.instantiate() as StaticBody2D
+		act_two_objective.position = objective_data.get("position", DRILL_SITE_POS)
+		act_two_objective.configure(objective_data)
+		act_two_objective.destroyed.connect(_on_act_two_objective_destroyed)
+		act_two_objective.pulsed.connect(_on_act_two_objective_pulsed)
+		act_two_objective.damaged.connect(_on_objective_damaged)
+		add_child(act_two_objective)
+		current_act_two_objectives.append(act_two_objective)
+		active_aliens += 1
+		mark_aliens_dirty()
 
 
 func _build_structure_raid_pool(wave_data: Dictionary) -> Array[String]:
@@ -1865,7 +2051,15 @@ func _announce_structure_raid(structure_id: String) -> void:
 		return
 
 	structure_raid_notice_sent = true
-	_set_banner("Raiders angle toward the %s." % _structure_display_name(structure_id), 1.8)
+	var consequence := ""
+	match structure_id:
+		"power_shed":
+			consequence = " If it falls, all turrets and shock posts fire slower."
+		"silo":
+			consequence = " If it falls, the farmhouse takes extra damage from every hit."
+		"barn":
+			consequence = " If it falls, you lose scrap and the end-of-wave bonus."
+	_set_banner("Raiders angle toward the %s.%s" % [_structure_display_name(structure_id), consequence], 3.0)
 
 
 func _maybe_spawn_midwave_objective() -> void:
@@ -1897,8 +2091,9 @@ func _maybe_spawn_midwave_objective() -> void:
 	add_child(relay)
 	current_signal_relay = relay
 	active_aliens += 1
+	mark_aliens_dirty()
 	_refresh_current_objective_text()
-	_set_banner("An alien relay locks onto the field. Smash it before the next pulse.", 2.4)
+	_set_banner("SIGNAL RELAY: Periodically boosts all alien speed and feeds the drill rig. Destroy it to stop the pulses.", 3.5)
 	_update_field_signal_state(wave, true)
 	_update_hint()
 
@@ -1956,14 +2151,103 @@ func _has_live_signal_relay() -> bool:
 	return current_signal_relay != null and is_instance_valid(current_signal_relay)
 
 
+func _has_live_wave_boss() -> bool:
+	return current_wave_boss != null and is_instance_valid(current_wave_boss)
+
+
+func _wave_boss_data() -> Dictionary:
+	if current_wave_index < 0 or current_wave_index >= ACT_ONE_WAVES.size():
+		return {}
+
+	var wave_data: Dictionary = ACT_ONE_WAVES[current_wave_index]
+	if not wave_data.has("boss"):
+		return {}
+	return wave_data["boss"]
+
+
+func _live_act_two_objectives() -> Array[StaticBody2D]:
+	var live_objectives: Array[StaticBody2D] = []
+	for objective in current_act_two_objectives:
+		if objective == null or not is_instance_valid(objective):
+			continue
+		if objective.is_queued_for_deletion():
+			continue
+		live_objectives.append(objective)
+	current_act_two_objectives = live_objectives
+	return live_objectives
+
+
+func _act_two_objective_focus_text() -> String:
+	var live_objectives := _live_act_two_objectives()
+	if live_objectives.is_empty():
+		return ""
+
+	var objective_kind := ""
+	if live_objectives[0].has_method("get_objective_kind"):
+		objective_kind = live_objectives[0].get_objective_kind()
+
+	match objective_kind:
+		"excavation_pylon":
+			return "Destroy the excavation pylons before they keep feeding the rig."
+		"breach_beacon":
+			return "Destroy the breach beacons before they keep lashing the farm."
+		"lift_anchor":
+			return "Destroy the lift anchors before they patch the rig and relay."
+		"command_beacon":
+			return "Destroy the command beacons before they drive the breach column harder."
+		_:
+			return "Destroy the remaining excavation nodes."
+
+
+func _maybe_spawn_wave_boss() -> void:
+	if boss_spawned_for_wave or _has_live_wave_boss():
+		return
+
+	var boss_data := _wave_boss_data()
+	if boss_data.is_empty():
+		return
+	if not _live_act_two_objectives().is_empty():
+		return
+
+	var wave_boss: CharacterBody2D = BOSS_OVERSEER_SCENE.instantiate() as CharacterBody2D
+	wave_boss.position = boss_data.get("position", Vector2(640.0, 188.0))
+	if wave_boss.has_method("configure"):
+		wave_boss.configure(boss_data)
+	wave_boss.destroyed.connect(_on_wave_boss_destroyed)
+	wave_boss.damaged.connect(_on_wave_boss_damaged)
+	wave_boss.attack_volley.connect(_on_wave_boss_attack_volley)
+	wave_boss.command_pulse.connect(_on_wave_boss_command_pulse)
+	wave_boss.phase_changed.connect(_on_wave_boss_phase_changed)
+	add_child(wave_boss)
+	current_wave_boss = wave_boss
+	boss_spawned_for_wave = true
+	active_aliens += 1
+	mark_aliens_dirty()
+	_play_positional_sfx(SFX_ALIEN_BRUTE_ROAR, wave_boss.global_position, -8.0, 0.72, 0.82)
+	_set_banner("%s drops out of the crater haze. Bring it down before dawn." % String(boss_data.get("name", "Overseer")), 2.5)
+	_refresh_current_objective_text()
+	_update_hint()
+	_update_stats()
+
+
 func _refresh_current_objective_text() -> void:
 	if not wave_active:
+		return
+	var act_two_focus_text := _act_two_objective_focus_text()
+	if act_two_focus_text != "":
+		current_objective_text = act_two_focus_text
+		return
+	if _has_live_wave_boss():
+		current_objective_text = "Destroy the Overseer before it tears the farm apart."
 		return
 	if _has_live_signal_relay():
 		if _has_live_drill_site():
 			current_objective_text = "Destroy the signal relay before it accelerates the command rig."
 		else:
 			current_objective_text = "Destroy the signal relay before it boosts the whole lane again."
+		return
+	if _has_live_drill_site():
+		current_objective_text = "Destroy the excavation rig before it breaches the field."
 		return
 	current_objective_text = base_wave_objective_text
 
@@ -2002,6 +2286,7 @@ func _show_patch_choice() -> void:
 	get_tree().paused = true
 	banner_label.text = banner_default
 	_refresh_support_units()
+	queue_redraw()
 	_update_hint()
 	_update_stats()
 
@@ -2040,6 +2325,7 @@ func _show_upgrade_panel(next_wave_index: int, transition_text: String) -> void:
 	get_tree().paused = true
 	banner_label.text = banner_default
 	_refresh_support_units()
+	queue_redraw()
 	_update_hint()
 	_update_stats()
 
@@ -2088,6 +2374,39 @@ func _upgrade_options_for_wave(next_wave_number: int) -> Array[Dictionary]:
 				{"id":"storm_dynamo","name":"Storm Dynamo","description":"Turn the whole defense grid up for the final rush."},
 				{"id":"hotshot_feed","name":"Hotshot Feed","description":"Make Eli's weapon faster and meaner."},
 				_path_upgrade_option_for_wave_six()
+			]
+		7:
+			var wave_seven_option := {"id":"breach_plating","name":"Breach Plating","description":"Brace the farmhouse and harden the defense grid for the excavation front."}
+			if rocket_tractor_unlocked:
+				wave_seven_option = {"id":"tractor_overdrive","name":"Tractor Overdrive","description":"Tune the red tractor hotter so it patrols faster and fires rockets more often."}
+			options = [
+				wave_seven_option,
+				{"id":"alien_battery_tap","name":"Alien Battery Tap","description":"Steal excavator current for faster shots across Eli and the farm grid."},
+				{"id":"barricade_spikes","name":"Barricade Spikes","description":"Rework the fence stock into tougher, meaner barricades."}
+			]
+		8:
+			var wave_eight_option := {"id":"deepcore_slugs","name":"Deepcore Slugs","description":"Load denser scrap into Eli's guns for harder hits in the breach."}
+			if rocket_tractor_unlocked:
+				wave_eight_option = {"id":"redline_payload","name":"Redline Payload","description":"Pack a heavier rocket into the red tractor's launcher."}
+			options = [
+				wave_eight_option,
+				{"id":"hardline_grid","name":"Hardline Grid","description":"Push the coil and shock network harder for faster, stronger defense fire."},
+				{"id":"rebuild_cache","name":"Rebuild Cache","description":"Crack a hidden stockpile for scrap, repairs, and one more round of bracing."}
+			]
+		9:
+			options = [
+				{"id":"relay_scrambler","name":"Relay Scrambler","description":"Tune the field against alien signals so Eli and the turrets bite harder."},
+				{"id":"heavy_shell_press","name":"Heavy Shell Press","description":"Rework the tractor cannon into a faster, nastier siege gun."},
+				{"id":"shock_lattice","name":"Shock Lattice","description":"Stretch the farm shock mesh so posts hit harder and hold aliens longer."}
+			]
+		10:
+			var wave_ten_option := {"id":"mothlight_scope","name":"Mothlight Scope","description":"Line Eli's guns up on the dawn silhouettes for brutal final-shot accuracy."}
+			if rocket_tractor_unlocked:
+				wave_ten_option = {"id":"tractor_salvo","name":"Tractor Salvo","description":"Rig the red tractor for faster rockets and a heavier final barrage."}
+			options = [
+				{"id":"dawn_charge","name":"Dawn Charge","description":"Dump every last battery into the farm for the final stand."},
+				{"id":"last_siding","name":"Last Siding","description":"Throw every spare board and sheet onto the farm before sunrise hits."},
+				wave_ten_option
 			]
 	if next_wave_number >= 3:
 		var structure_option: Dictionary = _structure_repair_option()
@@ -2154,9 +2473,10 @@ func _restore_farm_structure(structure_id: String) -> void:
 		return
 
 	structure.restore_full()
-	if structure_id == "power_shed":
+	if structure_id == "power_shed" or structure_id == "silo":
 		_refresh_turret_stats()
 	_update_stats()
+	queue_redraw()
 
 
 func _path_upgrade_option_for_wave_four() -> Dictionary:
@@ -2320,6 +2640,66 @@ func _apply_invention_upgrade(upgrade_id: String) -> String:
 			rocket_tractor_unlocked = true
 			_spawn_rocket_tractor()
 			return "Redline Tractor rolls out onto the field. The red machine patrols the rows and launches heavy rockets each wave."
+		"breach_plating":
+			base_health += 2
+			turret_damage += 1
+			_refresh_turret_stats()
+			return "Breach Plating locked in. The farmhouse gains 2 base and the defense grid hits harder."
+		"tractor_overdrive":
+			rocket_tractor_patrol_speed += 18.0
+			rocket_tractor_fire_interval = maxf(1.85, rocket_tractor_fire_interval - 0.45)
+			_refresh_rocket_tractor_stats()
+			return "The red tractor tears up the rows faster now and its rocket rack cycles harder."
+		"alien_battery_tap":
+			_apply_player_fire_rate_boost(0.02, 0.05)
+			turret_fire_interval = maxf(0.36, turret_fire_interval - 0.05)
+			shock_post_fire_interval = maxf(0.66, shock_post_fire_interval - 0.08)
+			_refresh_turret_stats()
+			return "Alien Battery Tap wired in. Eli, the turrets, and the shock posts all fire faster."
+		"barricade_spikes":
+			barricade_health += 3
+			barricade_cost = maxi(4, barricade_cost - 1)
+			return "Breach spikes hammered in. Barricades hold longer and now cost %d scrap." % barricade_cost
+		"redline_payload":
+			rocket_tractor_damage += 2
+			rocket_tractor_rocket_speed += 50.0
+			_refresh_rocket_tractor_stats()
+			return "Redline Payload loaded. The tractor's rockets now hit harder and scream in faster."
+		"deepcore_slugs":
+			player_bullet_damage += 1
+			tractor_cannon_fire_interval = maxf(0.58, tractor_cannon_fire_interval - 0.08)
+			_refresh_player_weapon()
+			return "Deepcore Slugs pressed. Eli hits harder and the tractor cannon cycles faster."
+		"hardline_grid":
+			turret_damage += 1
+			shock_post_damage += 1
+			turret_fire_interval = maxf(0.34, turret_fire_interval - 0.04)
+			shock_post_fire_interval = maxf(0.62, shock_post_fire_interval - 0.06)
+			_refresh_turret_stats()
+			return "Hardline Grid energized. Coil turrets and shock posts both fire faster and hit harder."
+		"rebuild_cache":
+			scrap += 8
+			base_health += 1
+			var structure_id := _priority_structure_to_repair()
+			if structure_id != "":
+				_restore_farm_structure(structure_id)
+				return "Rebuild Cache opened. Eli banks 8 scrap, gains 1 base, and patches the %s." % _structure_display_name(structure_id)
+			return "Rebuild Cache opened. Eli banks 8 scrap and throws one more layer onto the farmhouse."
+		"relay_scrambler":
+			player_bullet_damage += 1
+			turret_damage += 1
+			_refresh_turret_stats()
+			return "Relay Scrambler tuned. Eli and the defense grid cut through alien signal shielding harder."
+		"heavy_shell_press":
+			player_bullet_damage += 1
+			tractor_cannon_fire_interval = maxf(0.48, tractor_cannon_fire_interval - 0.10)
+			_refresh_player_weapon()
+			return "Heavy Shell Press finished. Eli's heavy gun cycles faster and every shot bites deeper."
+		"shock_lattice":
+			shock_post_damage += 1
+			shock_post_stun_duration += 0.15
+			_refresh_turret_stats()
+			return "Shock Lattice stretched across the farm. Shock posts hold targets longer and hit harder."
 		"barn_batteries":
 			base_health += 1
 			scrap += 4
@@ -2363,6 +2743,28 @@ func _apply_invention_upgrade(upgrade_id: String) -> String:
 			shock_post_damage += 1
 			_refresh_turret_stats()
 			return "Storm Dynamo armed. The final defense grid fires faster and harder."
+		"dawn_charge":
+			base_health += 2
+			_apply_player_fire_rate_boost(0.02, 0.05)
+			turret_damage += 1
+			shock_post_damage += 1
+			_refresh_turret_stats()
+			return "Dawn Charge dumped into the farm. Eli fires faster, the house holds harder, and the whole grid hits meaner."
+		"last_siding":
+			base_health += 2
+			for structure_id in FARM_STRUCTURE_ORDER:
+				_restore_farm_structure(structure_id)
+			return "Last Siding nailed in. The farmhouse gains 2 base and the standing structures get rebuilt for dawn."
+		"tractor_salvo":
+			rocket_tractor_fire_interval = maxf(1.50, rocket_tractor_fire_interval - 0.35)
+			rocket_tractor_damage += 1
+			_refresh_rocket_tractor_stats()
+			return "The red tractor is rigged for a dawn salvo. Rockets cycle faster and hit even harder."
+		"mothlight_scope":
+			player_bullet_damage += 2
+			tractor_cannon_fire_interval = maxf(0.46, tractor_cannon_fire_interval - 0.08)
+			_refresh_player_weapon()
+			return "Mothlight Scope dialed in. Eli's shots hit much harder and the heavy gun tracks faster."
 		"hotshot_feed":
 			_apply_player_fire_rate_boost(0.02, 0.05)
 			player_bullet_damage += 1
@@ -2427,17 +2829,33 @@ func _between_wave_text_for_wave(next_wave_number: int) -> String:
 					return "Patch digs up one last sealed cache near the tractor shed, and Eli folds it into the farm's last defenses while shield drones screen the final relay, burrowers tunnel in, and raiders break for every standing building."
 				_:
 					return "The silo throws long shadows over the field while shield drones, burrowers, a final relay, a command rig, and a structure raid line up the last rush in the sky."
+		7:
+			var act2_recap := _act_two_interlude_recap()
+			return "The command rig blows a trench into the north field and the whole fight changes shape.\n\n%s\n\nThe excavation depth meter now tracks how close the aliens are to extracting what is buried. Every rig pulse, driller feed, and pylon boost pushes it higher. If Eli destroys objectives fast, the meter stays low." % act2_recap
+		8:
+			return "The breach stays open all night now. Alien columns are marching straight out of the excavation scar, and every rebuild choice starts feeling temporary."
+		9:
+			return "Patch can smell hot metal and opened earth over the whole north field. Whatever the aliens are lifting is close enough now that the whole farm hums when the relay stacks pulse."
+		10:
+			return "The last workshop break lands under a sky that is starting to gray. Eli throws every spare board, coil, battery, and shell into one final defense before dawn."
 		_:
 			return ""
 
 
 func _refresh_turret_stats() -> void:
+	var penalty := not _has_intact_structure("power_shed")
+	power_penalty_visual_active = penalty
+	silo_penalty_visual_active = not _has_intact_structure("silo")
 	for node in get_tree().get_nodes_in_group("turrets"):
 		if node.has_method("set_stats"):
 			node.set_stats(_effective_turret_fire_interval(), turret_damage)
+		if node.has_method("set_power_penalty"):
+			node.set_power_penalty(penalty)
 	for node in get_tree().get_nodes_in_group("shock_posts"):
 		if node.has_method("set_stats"):
 			node.set_stats(_effective_shock_post_fire_interval(), shock_post_damage, shock_post_stun_duration)
+		if node.has_method("set_power_penalty"):
+			node.set_power_penalty(penalty)
 
 
 func _spawn_bullet(origin: Vector2, direction: Vector2, speed: float, damage: int, lifetime: float = 1.6, radius: float = 6.0, core_color: Color = Color8(255, 241, 196), tail_color: Color = Color8(255, 185, 71), damage_falloff_start: float = -1.0, damage_falloff_end: float = -1.0, minimum_damage: int = 1) -> void:
@@ -2445,6 +2863,14 @@ func _spawn_bullet(origin: Vector2, direction: Vector2, speed: float, damage: in
 	bullet.global_position = origin
 	bullet.configure(direction, speed, damage, lifetime, radius, core_color, tail_color, damage_falloff_start, damage_falloff_end, minimum_damage)
 	add_child(bullet)
+
+
+func _spawn_death_burst(world_position: Vector2, core_color: Color, spark_color: Color, burst_scale: float = 1.0, burst_style: int = 0) -> void:
+	var death_burst: Node2D = DEATH_BURST_SCENE.instantiate() as Node2D
+	death_burst.global_position = world_position
+	if death_burst.has_method("configure"):
+		death_burst.configure(core_color, spark_color, burst_scale, burst_style)
+	add_child(death_burst)
 
 
 func _on_player_fired(origin: Vector2, direction: Vector2) -> void:
@@ -2493,7 +2919,7 @@ func _on_build_requested(spot) -> void:
 	if selected_build_type == BUILD_SHOCK_POST:
 		var shock_post: Node2D = SHOCK_POST_SCENE.instantiate() as Node2D
 		shock_post.position = spot.position
-		shock_post.configure(_effective_shock_post_fire_interval(), shock_post_damage, shock_post_stun_duration)
+		shock_post.configure(_effective_shock_post_fire_interval(), shock_post_damage, shock_post_stun_duration, self)
 		shock_post.discharged.connect(_on_shock_post_discharged)
 		add_child(shock_post)
 		_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, spot.global_position, -10.0, 0.88, 0.96)
@@ -2508,7 +2934,7 @@ func _on_build_requested(spot) -> void:
 	else:
 		var turret: Node2D = TURRET_SCENE.instantiate() as Node2D
 		turret.position = spot.position
-		turret.configure(BULLET_SCENE, _effective_turret_fire_interval(), turret_damage)
+		turret.configure(BULLET_SCENE, _effective_turret_fire_interval(), turret_damage, self)
 		turret.fired_shot.connect(_on_turret_fired)
 		add_child(turret)
 		_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, spot.global_position, -12.0, 1.00, 1.06)
@@ -2518,12 +2944,14 @@ func _on_build_requested(spot) -> void:
 	_update_stats()
 
 
-func _on_alien_destroyed(scrap_value: int, _world_position: Vector2) -> void:
+func _on_alien_destroyed(scrap_value: int, world_position: Vector2) -> void:
 	if game_over:
 		return
 
 	active_aliens = maxi(0, active_aliens - 1)
-	_play_positional_sfx(SFX_ALIEN_DEATH, _world_position, -10.0, 0.94, 1.04)
+	mark_aliens_dirty()
+	_spawn_death_burst(world_position, Color8(255, 222, 170), Color8(124, 255, 188), 1.0)
+	_play_positional_sfx(SFX_ALIEN_DEATH, world_position, -10.0, 0.94, 1.04)
 
 	var total_scrap: int = scrap_value
 	var salvage_bonus := 0
@@ -2533,10 +2961,25 @@ func _on_alien_destroyed(scrap_value: int, _world_position: Vector2) -> void:
 
 	scrap += total_scrap
 	kills += 1
-	if salvage_bonus > 0 and kills % 4 == 0:
+	_spawn_damage_number(world_position, "+%d" % total_scrap, Color8(255, 222, 120))
+	combo_count += 1
+	combo_timer = COMBO_WINDOW
+	if combo_count == 3:
+		scrap += 2
+		_set_banner("TRIPLE KILL! +2 bonus scrap.", 2.0)
+	elif combo_count == 5:
+		scrap += 3
+		_set_banner("5x STREAK! +3 bonus scrap.", 2.0)
+	elif combo_count == 8:
+		scrap += 5
+		_set_banner("8x RAMPAGE! +5 bonus scrap.", 2.2)
+	elif combo_count > 8 and combo_count % 4 == 0:
+		scrap += 4
+		_set_banner("%dx MASSACRE! +4 bonus scrap." % combo_count, 2.2)
+	elif salvage_bonus > 0 and kills % 4 == 0:
 		_set_banner("Patch strips extra alloy from the crash site.", 1.5)
 	elif patch_path == PatchPath.SCOUT and kills % 8 == 0:
-		_set_banner("Patch keeps circling the old field markers.", 1.5)
+		_set_banner("Patch sniffs the field for buried stashes.", 1.5)
 	elif kills % 6 == 0:
 		_set_banner("Patch drags another chunk of saucer junk into the dirt.", 1.8)
 	_update_stats()
@@ -2548,10 +2991,14 @@ func _on_alien_drill_site_reached(progress_boost: float) -> void:
 		return
 
 	active_aliens = maxi(0, active_aliens - 1)
+	mark_aliens_dirty()
 	if _has_live_drill_site():
 		current_drill_site.boost_progress(progress_boost)
 		if game_over:
 			return
+		if _act_two_active():
+			excavation_depth = minf(EXCAVATION_MAX, excavation_depth + progress_boost * 0.15)
+			queue_redraw()
 		_set_banner("A driller fed the north-field rig.", 1.6)
 	_update_stats()
 	_queue_wave_completion_check()
@@ -2562,6 +3009,7 @@ func _on_alien_structure_hit(structure_id: String, damage: int) -> void:
 		return
 
 	active_aliens = maxi(0, active_aliens - 1)
+	mark_aliens_dirty()
 	_damage_farm_structure(structure_id, damage)
 	_update_stats()
 	_queue_wave_completion_check()
@@ -2582,11 +3030,15 @@ func _on_alien_ranged_attack(origin: Vector2, target_position: Vector2, damage: 
 	if game_over or mission_complete:
 		return
 
+	_spawn_enemy_bolt(origin, target_position, projectile_speed, damage, target_structure_id)
+	_play_positional_sfx(SFX_WEAPON_ROCKET_LAUNCH, origin, -13.0, 0.92, 1.00)
+
+
+func _spawn_enemy_bolt(origin: Vector2, target_position: Vector2, projectile_speed: float, damage: int, target_structure_id: String) -> void:
 	var enemy_bolt: Area2D = ENEMY_BOLT_SCENE.instantiate() as Area2D
 	enemy_bolt.configure(origin, target_position, projectile_speed, damage, target_structure_id)
 	enemy_bolt.impacted.connect(_on_enemy_bolt_impacted)
 	add_child(enemy_bolt)
-	_play_positional_sfx(SFX_WEAPON_ROCKET_LAUNCH, origin, -13.0, 0.92, 1.00)
 
 
 func _on_turret_fired(origin: Vector2) -> void:
@@ -2614,12 +3066,15 @@ func _on_alien_farmhouse_hit(damage: int) -> void:
 		return
 
 	active_aliens = maxi(0, active_aliens - 1)
+	mark_aliens_dirty()
 	base_health -= damage + _farmhouse_damage_bonus()
 	if base_health <= 0:
 		_trigger_game_over("The farmhouse is gone. Reset and hold the line again.")
 	else:
 		_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, FARMHOUSE_POS, -18.0, 0.88, 0.96)
 		_set_banner("The farmhouse took a hit!", 1.4)
+		_spawn_damage_number(FARMHOUSE_POS, "-%d" % (damage + _farmhouse_damage_bonus()), Color8(255, 92, 72), 18)
+		_trigger_shake(3.0)
 		_update_stats()
 		_queue_wave_completion_check()
 
@@ -2655,6 +3110,7 @@ func _on_farm_structure_damaged(structure_id: String, world_position: Vector2) -
 
 	_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, world_position, -18.0, 0.92, 1.00)
 	_set_banner("%s takes a hit." % _structure_display_name(structure_id), 1.3)
+	_spawn_damage_number(world_position, "-1", Color8(255, 142, 82))
 	_update_stats()
 
 
@@ -2672,9 +3128,13 @@ func _on_farm_structure_destroyed(structure_id: String, world_position: Vector2)
 			_refresh_turret_stats()
 			_set_banner("Power shed wrecked. Farm defenses cycle slower now.", 2.2)
 		"silo":
+			silo_penalty_visual_active = true
 			_set_banner("Silo shattered. Every farmhouse hit will land harder.", 2.2)
 		_:
 			_set_banner("%s lost." % _structure_display_name(structure_id), 2.0)
+	_trigger_shake(5.0, 6.0)
+	if audio_manager != null:
+		audio_manager.pulse_intensity(0.4)
 	_update_hint()
 	_update_stats()
 
@@ -2685,14 +3145,206 @@ func _on_objective_damaged(_world_position: Vector2) -> void:
 	_update_stats()
 
 
-func _on_drill_site_destroyed(scrap_value: int, _world_position: Vector2) -> void:
+func _apply_enemy_frenzy(source_name: String, boost_multiplier: float, boost_duration: float, drill_boost: float) -> bool:
+	var boosted_enemies := 0
+	for node in get_tree().get_nodes_in_group("aliens"):
+		if node == current_signal_relay or node == current_wave_boss:
+			continue
+		if node.has_method("apply_signal_boost"):
+			node.apply_signal_boost(boost_duration, boost_multiplier)
+			boosted_enemies += 1
+
+	var boosted_drill := false
+	if drill_boost > 0.0 and _has_live_drill_site():
+		current_drill_site.boost_progress(drill_boost)
+		if game_over:
+			return true
+		boosted_drill = true
+		if _act_two_active():
+			excavation_depth = minf(EXCAVATION_MAX, excavation_depth + drill_boost * 0.1)
+			queue_redraw()
+
+	if boosted_enemies > 0 and boosted_drill:
+		_set_banner("%s drives the breach column and the rig together." % source_name, 1.8)
+		return true
+	if boosted_enemies > 0:
+		_set_banner("%s drives the whole lane into a frenzy." % source_name, 1.8)
+		return true
+	if boosted_drill:
+		_set_banner("%s feeds the final excavation push." % source_name, 1.8)
+		return true
+	return false
+
+
+func _on_act_two_objective_destroyed(scrap_value: int, world_position: Vector2, _objective_id: String, display_name: String, objective_kind: String) -> void:
 	if game_over:
 		return
 
 	active_aliens = maxi(0, active_aliens - 1)
+	mark_aliens_dirty()
+	scrap += scrap_value
+
+	var burst_core := Color8(255, 214, 132)
+	var burst_spark := Color8(255, 118, 74)
+	var burst_scale := 1.18
+	var burst_style := 1
+	match objective_kind:
+		"breach_beacon":
+			burst_core = Color8(255, 172, 118)
+			burst_spark = Color8(255, 98, 86)
+			burst_style = 4
+		"lift_anchor":
+			burst_core = Color8(140, 232, 255)
+			burst_spark = Color8(246, 190, 124)
+			burst_style = 3
+		"command_beacon":
+			burst_core = Color8(202, 228, 255)
+			burst_spark = Color8(210, 120, 255)
+			burst_scale = 1.30
+			burst_style = 2
+	_spawn_death_burst(world_position, burst_core, burst_spark, burst_scale, burst_style)
+	_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, world_position, -10.0, 0.82, 0.92)
+	_set_banner("%s destroyed." % display_name, 1.7)
+	_maybe_spawn_wave_boss()
+	_refresh_current_objective_text()
+	_update_hint()
+	_update_stats()
+	_queue_wave_completion_check()
+
+
+func _on_act_two_objective_pulsed(_objective_id: String, display_name: String, objective_kind: String, effect_kind: String, primary_value: float, secondary_value: float, tertiary_value: float, target_structure_id: String, world_position: Vector2) -> void:
+	if game_over or mission_complete:
+		return
+
+	var effect_triggered := false
+	match effect_kind:
+		"drill_boost":
+			if _has_live_drill_site():
+				current_drill_site.boost_progress(primary_value)
+				if game_over:
+					return
+				_set_banner("%s feeds the excavation rig." % display_name, 1.6)
+				effect_triggered = true
+		"structure_strike":
+			var strike_damage := maxi(1, int(round(primary_value)))
+			if target_structure_id != "" and _has_intact_structure(target_structure_id):
+				_damage_farm_structure(target_structure_id, strike_damage, true)
+				_set_banner("%s lashes the %s." % [display_name, _structure_display_name(target_structure_id)], 1.6)
+				effect_triggered = true
+			else:
+				base_health -= strike_damage + _farmhouse_damage_bonus()
+				if base_health <= 0:
+					_trigger_game_over("%s punched through the ruined line and the farmhouse fell." % display_name)
+					return
+				_set_banner("%s lashes the farmhouse." % display_name, 1.6)
+				effect_triggered = true
+		"repair_objectives":
+			var repaired_bits: Array[String] = []
+			var rig_repair := maxi(0, int(round(primary_value)))
+			var relay_repair := maxi(0, int(round(secondary_value)))
+			if _has_live_drill_site() and rig_repair > 0:
+				current_drill_site.repair(rig_repair)
+				repaired_bits.append("rig")
+			if _has_live_signal_relay() and relay_repair > 0:
+				current_signal_relay.repair(relay_repair)
+				repaired_bits.append("relay")
+			if not repaired_bits.is_empty():
+				_set_banner("%s patches the %s." % [display_name, " and ".join(repaired_bits)], 1.7)
+				effect_triggered = true
+		"frenzy":
+			effect_triggered = _apply_enemy_frenzy(display_name, primary_value, secondary_value, tertiary_value)
+
+	if effect_triggered:
+		var pulse_volume := -14.0
+		if objective_kind == "command_beacon":
+			pulse_volume = -11.5
+		_play_positional_sfx(SFX_ALIEN_CHITTER_IDLE, world_position, pulse_volume, 0.80, 0.90)
+		_update_stats()
+
+
+func _next_wave_boss_target() -> Dictionary:
+	var target_order: Array[String] = ["power_shed", "barn", "silo", ""]
+	var target_count := target_order.size()
+	for offset in range(target_count):
+		var target_id: String = target_order[(boss_target_cycle + offset) % target_count]
+		if target_id == "":
+			boss_target_cycle = (boss_target_cycle + offset + 1) % target_count
+			return {
+				"position": FARMHOUSE_POS + Vector2(randf_range(-42.0, 42.0), randf_range(-20.0, 16.0)),
+				"target_structure_id": "",
+			}
+		if _has_intact_structure(target_id):
+			boss_target_cycle = (boss_target_cycle + offset + 1) % target_count
+			return {
+				"position": _structure_target_position(target_id) + Vector2(randf_range(-22.0, 22.0), randf_range(-18.0, 18.0)),
+				"target_structure_id": target_id,
+			}
+
+	return {
+		"position": FARMHOUSE_POS,
+		"target_structure_id": "",
+	}
+
+
+func _on_wave_boss_attack_volley(_display_name: String, origin: Vector2, shot_count: int, damage: int, projectile_speed: float) -> void:
+	if game_over or mission_complete:
+		return
+
+	for shot_index in range(shot_count):
+		var target_package := _next_wave_boss_target()
+		var muzzle_offset := Vector2(lerpf(-18.0, 18.0, float(shot_index) / float(maxi(1, shot_count - 1))), randf_range(-4.0, 6.0))
+		_spawn_enemy_bolt(origin + muzzle_offset, target_package["position"], projectile_speed, damage, target_package["target_structure_id"])
+	_play_positional_sfx(SFX_WEAPON_ROCKET_LAUNCH, origin, -7.0, 0.74, 0.82)
+
+
+func _on_wave_boss_command_pulse(display_name: String, world_position: Vector2, boost_multiplier: float, boost_duration: float, drill_boost: float) -> void:
+	if game_over or mission_complete:
+		return
+	if _apply_enemy_frenzy(display_name, boost_multiplier, boost_duration, drill_boost):
+		_play_positional_sfx(SFX_ALIEN_CHITTER_IDLE, world_position, -11.0, 0.72, 0.82)
+		_update_stats()
+
+
+func _on_wave_boss_phase_changed(display_name: String, world_position: Vector2) -> void:
+	if game_over:
+		return
+
+	_play_positional_sfx(SFX_ALIEN_BRUTE_ROAR, world_position, -7.0, 0.82, 0.90)
+	_set_banner("%s armor cracks open. Its fire pattern gets nastier." % display_name, 2.1)
+
+
+func _on_wave_boss_damaged(world_position: Vector2) -> void:
+	_play_positional_sfx(SFX_ALIEN_HURT, world_position, -8.0, 0.76, 0.86)
+
+
+func _on_wave_boss_destroyed(scrap_value: int, world_position: Vector2) -> void:
+	if game_over:
+		return
+
+	active_aliens = maxi(0, active_aliens - 1)
+	mark_aliens_dirty()
+	current_wave_boss = null
+	scrap += scrap_value
+	_spawn_death_burst(world_position, Color8(255, 214, 168), Color8(196, 132, 255), 1.75, 2)
+	_play_positional_sfx(SFX_ALIEN_DEATH, world_position, -6.0, 0.70, 0.80)
+	_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, world_position, -5.0, 0.76, 0.84)
+	_set_banner("The Overseer drops into the crater in pieces.", 2.4)
+	_refresh_current_objective_text()
+	_update_hint()
+	_update_stats()
+	_queue_wave_completion_check()
+
+
+func _on_drill_site_destroyed(scrap_value: int, world_position: Vector2) -> void:
+	if game_over:
+		return
+
+	active_aliens = maxi(0, active_aliens - 1)
+	mark_aliens_dirty()
 	current_drill_site = null
 	scrap += scrap_value
-	_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, _world_position, -8.0, 0.84, 0.92)
+	_spawn_death_burst(world_position, Color8(255, 188, 122), Color8(214, 92, 74), 1.55, 1)
+	_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, world_position, -8.0, 0.84, 0.92)
 	_set_banner("North-field drill rig destroyed.", 2.0)
 	_refresh_current_objective_text()
 	_update_field_signal_state(wave, wave >= 4)
@@ -2706,8 +3358,10 @@ func _on_drill_site_breached() -> void:
 		return
 
 	active_aliens = maxi(0, active_aliens - 1)
+	mark_aliens_dirty()
 	current_drill_site = null
 	_update_field_signal_state(wave, true)
+	_trigger_shake(8.0, 4.0)
 	_trigger_game_over("North field breached. The aliens drilled into what was buried below.")
 
 
@@ -2732,21 +3386,23 @@ func _on_signal_relay_pulsed(boost_multiplier: float, boost_duration: float, dri
 
 	_play_positional_sfx(SFX_ALIEN_CHITTER_IDLE, current_signal_relay.global_position, -14.0, 0.82, 0.90)
 	if boosted_enemies > 0 and boosted_drill:
-		_set_banner("Relay pulse drives the lane and feeds the command rig.", 1.7)
+		_set_banner("Relay pulse! All aliens move faster and the rig gains progress. Destroy the relay to stop this.", 2.2)
 	elif boosted_enemies > 0:
-		_set_banner("Relay pulse drives the invaders into a frenzy.", 1.6)
+		_set_banner("Relay pulse! All aliens speed up. Destroy the relay to stop the boosts.", 2.2)
 	elif boosted_drill:
 		_set_banner("Relay pulse surges into the north-field rig.", 1.6)
 
 
-func _on_signal_relay_destroyed(scrap_value: int, _world_position: Vector2) -> void:
+func _on_signal_relay_destroyed(scrap_value: int, world_position: Vector2) -> void:
 	if game_over:
 		return
 
 	active_aliens = maxi(0, active_aliens - 1)
+	mark_aliens_dirty()
 	current_signal_relay = null
 	scrap += scrap_value
-	_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, _world_position, -9.0, 0.82, 0.90)
+	_spawn_death_burst(world_position, Color8(188, 240, 255), Color8(194, 124, 230), 1.35, 3)
+	_play_positional_sfx(SFX_WEAPON_HEAVY_BLAST, world_position, -9.0, 0.82, 0.90)
 	_refresh_current_objective_text()
 	_set_banner("Signal relay destroyed. The lane drops out of sync.", 1.9)
 	_update_field_signal_state(wave, _has_live_drill_site() or wave >= 4)
@@ -2780,7 +3436,7 @@ func _check_wave_completion() -> void:
 	wave_active = false
 	spawn_timer.stop()
 	current_objective_text = "Wave %d secure. Eli and Patch reset the fence line." % wave
-	var farm_transition_text := _wave_clear_farm_text()
+	wave_clear_farm_text = _wave_clear_farm_text()
 	_update_hint()
 	_update_stats()
 
@@ -2788,18 +3444,40 @@ func _check_wave_completion() -> void:
 		_show_mission_complete()
 		return
 
-	if current_wave_index == 0 and patch_path == PatchPath.NONE:
-		_show_patch_choice()
-		return
+	_show_wave_complete_summary()
 
-	var next_wave_index: int = current_wave_index + 1
-	var transition_text: String = _prepare_transition_for_wave(next_wave_index + 1)
-	if farm_transition_text != "":
-		if transition_text != "":
-			transition_text = farm_transition_text + "\n\n" + transition_text
-		else:
-			transition_text = farm_transition_text
-	_show_upgrade_panel(next_wave_index, transition_text)
+
+func _show_wave_complete_summary() -> void:
+	wave_clear_pending = true
+	settings_menu_open = false
+	prep_phase_active = false
+	_clear_scout_caches()
+
+	var summary := "Wave %d cleared." % wave
+	var structures_standing := 0
+	for structure_id in FARM_STRUCTURE_ORDER:
+		if _has_intact_structure(structure_id):
+			structures_standing += 1
+	summary += " Kills: %d. Scrap: %d. Base: %d. Structures: %d/3." % [kills, scrap, base_health, structures_standing]
+	if wave_clear_farm_text != "":
+		summary += "\n\n%s" % wave_clear_farm_text
+
+	banner_default = "Wave %d complete." % wave
+	briefing_title_label.text = "Wave %d Complete" % wave
+	briefing_body_label.text = summary
+	briefing_footer_label.text = "Take a moment, then head to the workshop."
+	briefing_continue_button.text = "Continue to Workshop"
+	briefing_panel.visible = true
+	prep_panel.visible = false
+	upgrade_panel.visible = false
+	patch_panel.visible = false
+	pause_panel.visible = false
+	get_tree().paused = true
+	banner_label.text = banner_default
+	_refresh_support_units()
+	queue_redraw()
+	_update_hint()
+	_update_stats()
 
 
 func _show_mission_complete() -> void:
@@ -2809,13 +3487,15 @@ func _show_mission_complete() -> void:
 	wave_active = false
 	spawn_timer.stop()
 	banner_timer.stop()
-	current_objective_text = "Act 1 complete. Eli held the farm for one more night."
-	banner_default = "Act 1 complete: Miller Farm survives the first assault."
+	current_objective_text = "Campaign complete. Eli and Patch hold Miller Farm until dawn."
+	banner_default = "Act 2 complete: Miller Farm survives until dawn."
 	banner_label.text = banner_default
-	briefing_title_label.text = "Act 1 Complete: The Farm Holds"
-	briefing_body_label.text = "The last harvester wreck burns out beyond the silo. Eli and Patch keep the farmhouse standing, but the north field is still pulsing under the dirt.\n\n%s" % _mission_outro_for_patch()
-	briefing_footer_label.text = "Act 2 can grow from here. For now, this run ends with the farm still standing."
-	briefing_continue_button.text = "Restart Act 1"
+	briefing_title_label.text = "Act 2 Complete: Dawn Over Miller Farm"
+	var rating := _campaign_rating()
+	var stats_text := _campaign_stats_text()
+	briefing_body_label.text = "The last extraction rig folds into the crater as the first sunlight reaches the barn roof. Eli and Patch keep the farmhouse standing through the whole invasion night, and the field finally goes quiet.\n\n%s\n\n%s\nDefense rating: %s" % [_mission_outro_for_patch(), stats_text, rating]
+	briefing_footer_label.text = "Acts 1 and 2 are complete. Restart the campaign to defend Miller Farm again."
+	briefing_continue_button.text = "Restart Campaign"
 	briefing_panel.visible = true
 	prep_panel.visible = false
 	upgrade_panel.visible = false
@@ -2824,6 +3504,7 @@ func _show_mission_complete() -> void:
 	get_tree().paused = true
 	_update_field_signal_state(wave, true)
 	_refresh_support_units()
+	queue_redraw()
 	_update_hint()
 	_update_stats()
 
@@ -2840,8 +3521,51 @@ func _mission_outro_for_patch() -> String:
 			return "Patch fought as hard as Eli did, even before the farm figured out what role he should grow into."
 
 
+func _act_two_interlude_recap() -> String:
+	var structures_standing := 0
+	for structure_id in FARM_STRUCTURE_ORDER:
+		if _has_intact_structure(structure_id):
+			structures_standing += 1
+	var recap := "Act 1 recap: Eli held the farm through 6 waves with %d kills, %d scrap on hand, and %d/3 structures still standing." % [kills, scrap, structures_standing]
+	match patch_path:
+		PatchPath.SCRAP:
+			recap += " Patch's scrap hound instincts kept the war chest full."
+		PatchPath.GUARD:
+			recap += " Patch's guard bark kept the lanes locked down."
+		PatchPath.SCOUT:
+			recap += " Patch's scout nose uncovered buried caches across the field."
+	return recap
+
+
+func _campaign_stats_text() -> String:
+	var structures_standing := 0
+	for structure_id in FARM_STRUCTURE_ORDER:
+		if _has_intact_structure(structure_id):
+			structures_standing += 1
+	return "Kills: %d. Scrap earned: %d. Base remaining: %d. Structures standing: %d/3. Excavation depth: %d%%." % [
+		kills, scrap, base_health, structures_standing, int(round(excavation_depth))
+	]
+
+
+func _campaign_rating() -> String:
+	var structures_standing := 0
+	for structure_id in FARM_STRUCTURE_ORDER:
+		if _has_intact_structure(structure_id):
+			structures_standing += 1
+	if base_health >= 8 and structures_standing == 3 and excavation_depth < 30.0:
+		return "IRONCLAD"
+	if base_health >= 5 and structures_standing >= 2:
+		return "STEADY"
+	if base_health >= 2 and structures_standing >= 1:
+		return "BATTERED"
+	return "BARELY STANDING"
+
+
 func _trigger_game_over(reason: String) -> void:
 	game_over = true
+	_trigger_shake(10.0, 3.0)
+	combo_count = 0
+	combo_timer = 0.0
 	settings_menu_open = false
 	prep_phase_active = false
 	wave_active = false
@@ -2863,6 +3587,7 @@ func _trigger_game_over(reason: String) -> void:
 	get_tree().paused = true
 	_update_field_signal_state(wave, true)
 	_refresh_support_units()
+	queue_redraw()
 	_update_hint()
 	_update_stats()
 
@@ -2875,6 +3600,18 @@ func _set_banner(text: String, duration: float = 2.0) -> void:
 
 func _restore_banner() -> void:
 	banner_label.text = banner_default
+
+
+func _trigger_shake(intensity: float = 4.0, decay: float = 8.0) -> void:
+	shake_intensity = maxf(shake_intensity, intensity)
+	shake_decay = decay
+
+
+func _spawn_damage_number(world_position: Vector2, text: String, color: Color = Color8(255, 255, 255), font_size: int = 16) -> void:
+	var number: Node2D = DAMAGE_NUMBER_SCENE.instantiate() as Node2D
+	number.global_position = world_position + Vector2(randf_range(-12.0, 12.0), randf_range(-8.0, 4.0))
+	number.configure(text, color, 1.0, font_size)
+	add_child(number)
 
 
 func _wave_clear_farm_text() -> String:
@@ -2890,6 +3627,8 @@ func _wave_clear_farm_text() -> String:
 func _update_stats() -> void:
 	var threats_remaining: int = _threats_remaining()
 	stats_label.text = "Scrap %02d  Base %02d  Wave %02d/%02d  Threat %02d  Gun %s  Patch %s" % [scrap, base_health, maxi(1, wave), ACT_ONE_WAVES.size(), threats_remaining, _current_weapon_name(), _patch_summary()]
+	if combo_count >= 2 and combo_timer > 0.0:
+		stats_label.text += "  Combo x%d" % combo_count
 	var farm_text := _farm_status_text()
 	var objective_status := _objective_status_text()
 	if objective_status != "":
@@ -2923,6 +3662,24 @@ func _objective_status_text() -> String:
 		if status_text != "":
 			status_text += "  "
 		status_text += relay_text
+	if _has_live_wave_boss():
+		var boss_label := "Boss %02d/%02d" % [
+			current_wave_boss.get_health(),
+			current_wave_boss.get_max_health()
+		]
+		if status_text != "":
+			status_text += "  "
+		status_text += boss_label
+	var live_act_two_objectives := _live_act_two_objectives()
+	if not live_act_two_objectives.is_empty():
+		var objective_bits: Array[String] = []
+		for objective in live_act_two_objectives:
+			if objective.has_method("get_status_text"):
+				objective_bits.append(objective.get_status_text())
+		if not objective_bits.is_empty():
+			if status_text != "":
+				status_text += "  "
+			status_text += "  ".join(objective_bits)
 	return status_text
 
 
@@ -2946,7 +3703,14 @@ func _farm_status_text() -> String:
 
 	if status_bits.is_empty():
 		return ""
-	return "Farm " + "  ".join(status_bits)
+	var farm_text := "Farm " + "  ".join(status_bits)
+	if _act_two_active() and excavation_depth > 0.0:
+		farm_text += "  Depth %d%%" % int(round(excavation_depth))
+	if power_penalty_visual_active:
+		farm_text += "  [SLOW]"
+	if silo_penalty_visual_active:
+		farm_text += "  [VULN]"
+	return farm_text
 
 
 func _update_hint() -> void:
@@ -2961,7 +3725,7 @@ func _update_hint() -> void:
 		return
 
 	if mission_complete:
-		hint_label.text = "Act 1 complete. Press R or use the panel to restart the defense."
+		hint_label.text = "Campaign complete. Press R or use the panel to restart the defense."
 		_refresh_touch_hud()
 		return
 
@@ -3033,6 +3797,34 @@ func _patch_rank_to_roman(rank_value: int) -> String:
 			return "-"
 
 
+func _act_two_active() -> bool:
+	return wave >= 7 or current_wave_index >= 6 or mission_complete
+
+
+func _background_scale(viewport_size: Vector2) -> Vector2:
+	return Vector2(viewport_size.x / WORLD_SIZE.x, viewport_size.y / WORLD_SIZE.y)
+
+
+func _bg_point(point: Vector2, scale: Vector2) -> Vector2:
+	return Vector2(point.x * scale.x, point.y * scale.y)
+
+
+func _bg_size(size: Vector2, scale: Vector2) -> Vector2:
+	return Vector2(size.x * scale.x, size.y * scale.y)
+
+
+func _bg_rect(rect: Rect2, scale: Vector2) -> Rect2:
+	return Rect2(_bg_point(rect.position, scale), _bg_size(rect.size, scale))
+
+
+func _bg_radius(radius: float, scale: Vector2) -> float:
+	return radius * minf(scale.x, scale.y)
+
+
+func _bg_thickness(width: float, scale: Vector2) -> float:
+	return width * ((scale.x + scale.y) * 0.5)
+
+
 func _story_text_for_wave(current_wave: int) -> String:
 	match current_wave:
 		1:
@@ -3071,6 +3863,14 @@ func _story_text_for_wave(current_wave: int) -> String:
 					return "Wave 6: Patch's bark rolls across the farm while shield drones, burrowers, the command rig, the final relay, and the structure raid pound the field."
 				_:
 					return "Wave 6: Shield drones, burrowers, a command rig, a final relay, and a structure raid hammer the field while Eli turns the tractor shed into a war workshop."
+		7:
+			return "Wave 7: Act 2 starts with the north field ripped open and the excavation front rolling straight at Miller Farm."
+		8:
+			return "Wave 8: A breach column marches out of the crater while shield drones and burrowers split the pressure across the barn and silo."
+		9:
+			return "Wave 9: The aliens start lifting glowing machinery out of the pit while harriers, relays, and rig crews pull the whole farm apart."
+		10:
+			return "Wave 10: Dawn starts to break while the Overseer command craft comes in behind the final extraction push."
 		_:
 			return "The field stays loud with engines and falling metal."
 
@@ -3128,6 +3928,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_weapon()
 		return
 
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
+		if dog != null and is_instance_valid(dog) and wave_active and not game_over and not mission_complete:
+			get_viewport().set_input_as_handled()
+			var click_pos: Vector2 = get_global_mouse_position()
+			dog.set_command_point(click_pos)
+			_set_banner("Patch! Go check that spot.", 1.2)
+			return
+
 	if event.is_action_pressed("build_primary"):
 		get_viewport().set_input_as_handled()
 		_select_build_type(BUILD_COIL_TURRET)
@@ -3143,38 +3951,163 @@ func _unhandled_input(event: InputEvent) -> void:
 		_select_build_type(BUILD_BARRICADE)
 
 
+func _draw_threat_indicators(viewport_size: Vector2) -> void:
+	if not wave_active or game_over or mission_complete:
+		return
+
+	var margin := 24.0
+	var arrow_size := 10.0
+	var screen_rect := Rect2(Vector2(margin, 80.0), viewport_size - Vector2(margin * 2.0, 80.0 + 50.0))
+
+	for node in cached_aliens:
+		if node == null or not is_instance_valid(node):
+			continue
+		if not (node is Node2D):
+			continue
+		var alien_pos: Vector2 = (node as Node2D).global_position
+		if screen_rect.has_point(alien_pos):
+			continue
+
+		var center := screen_rect.get_center()
+		var direction := (alien_pos - center).normalized()
+
+		# Clamp to screen edge
+		var edge_pos := center
+		var t_min := 1000000.0
+		# Check intersection with each edge
+		if direction.x != 0.0:
+			var t_left := (screen_rect.position.x - center.x) / direction.x
+			if t_left > 0.0 and t_left < t_min:
+				var y := center.y + direction.y * t_left
+				if y >= screen_rect.position.y and y <= screen_rect.position.y + screen_rect.size.y:
+					t_min = t_left
+			var t_right := (screen_rect.position.x + screen_rect.size.x - center.x) / direction.x
+			if t_right > 0.0 and t_right < t_min:
+				var y := center.y + direction.y * t_right
+				if y >= screen_rect.position.y and y <= screen_rect.position.y + screen_rect.size.y:
+					t_min = t_right
+		if direction.y != 0.0:
+			var t_top := (screen_rect.position.y - center.y) / direction.y
+			if t_top > 0.0 and t_top < t_min:
+				var x := center.x + direction.x * t_top
+				if x >= screen_rect.position.x and x <= screen_rect.position.x + screen_rect.size.x:
+					t_min = t_top
+			var t_bottom := (screen_rect.position.y + screen_rect.size.y - center.y) / direction.y
+			if t_bottom > 0.0 and t_bottom < t_min:
+				var x := center.x + direction.x * t_bottom
+				if x >= screen_rect.position.x and x <= screen_rect.position.x + screen_rect.size.x:
+					t_min = t_bottom
+
+		if t_min < 999999.0:
+			edge_pos = center + direction * t_min
+
+		var arrow_color := Color8(255, 92, 72, 180)
+		var perp := Vector2(-direction.y, direction.x)
+		var tip := edge_pos
+		var base_left := tip - direction * arrow_size + perp * (arrow_size * 0.5)
+		var base_right := tip - direction * arrow_size - perp * (arrow_size * 0.5)
+		draw_colored_polygon(PackedVector2Array([tip, base_left, base_right]), arrow_color)
+
+
 func _draw() -> void:
 	var viewport_size := get_viewport_rect().size
+	var act_two_active := _act_two_active()
+	var bg_scale := _background_scale(viewport_size)
+	var base_bottom_y := _bg_point(Vector2(0.0, 464.0), bg_scale).y
 	draw_rect(Rect2(Vector2.ZERO, viewport_size), Color8(251, 210, 157))
-	draw_circle(Vector2(1116.0, 118.0), 76.0, Color8(255, 239, 174))
-	draw_rect(Rect2(Vector2(0.0, 248.0), Vector2(viewport_size.x, maxf(0.0, viewport_size.y - 248.0))), Color8(195, 151, 82))
-	draw_rect(Rect2(Vector2(0.0, 464.0), Vector2(viewport_size.x, maxf(0.0, viewport_size.y - 464.0))), Color8(120, 155, 76))
+	draw_circle(_bg_point(Vector2(1116.0, 118.0), bg_scale), _bg_radius(76.0, bg_scale), Color8(255, 239, 174))
+	draw_rect(Rect2(Vector2(0.0, _bg_point(Vector2(0.0, 248.0), bg_scale).y), Vector2(viewport_size.x, maxf(0.0, viewport_size.y - _bg_point(Vector2(0.0, 248.0), bg_scale).y))), Color8(195, 151, 82))
+	draw_rect(Rect2(Vector2(0.0, base_bottom_y), Vector2(viewport_size.x, maxf(0.0, viewport_size.y - base_bottom_y))), Color8(120, 155, 76))
 
 	for row in range(6):
 		var y: float = 288.0 + float(row) * 34.0
-		draw_line(Vector2(80.0, y), Vector2(maxf(1200.0, viewport_size.x - 80.0), y + 54.0), Color8(147, 110, 58), 2.0, true)
+		var row_start := _bg_point(Vector2(80.0, y), bg_scale)
+		var row_end := Vector2(maxf(_bg_point(Vector2(1200.0, 0.0), bg_scale).x, viewport_size.x - 80.0 * bg_scale.x), _bg_point(Vector2(0.0, y + 54.0), bg_scale).y)
+		draw_line(row_start, row_end, Color8(147, 110, 58), _bg_thickness(2.0, bg_scale), true)
 
-	for x in range(96, maxi(1184, int(viewport_size.x) - 96), 48):
-		draw_line(Vector2(float(x), 440.0), Vector2(float(x), 470.0), Color8(235, 224, 193), 3.0, true)
-	draw_line(Vector2(72.0, 444.0), Vector2(maxf(1208.0, viewport_size.x - 72.0), 444.0), Color8(235, 224, 193), 4.0, true)
-	draw_line(Vector2(72.0, 470.0), Vector2(maxf(1208.0, viewport_size.x - 72.0), 470.0), Color8(235, 224, 193), 4.0, true)
+	if act_two_active:
+		var crater_center := _bg_point(DRILL_SITE_POS + Vector2(0.0, -6.0), bg_scale)
+		draw_circle(crater_center, _bg_radius(146.0, bg_scale), Color8(83, 62, 53))
+		draw_circle(crater_center + _bg_size(Vector2(0.0, 8.0), bg_scale), _bg_radius(104.0, bg_scale), Color8(51, 41, 37))
+		draw_circle(crater_center + _bg_size(Vector2(-14.0, -6.0), bg_scale), _bg_radius(52.0, bg_scale), Color8(98, 201, 214, 58))
+		draw_line(_bg_point(Vector2(DRILL_SITE_POS.x - 118.0, DRILL_SITE_POS.y - 104.0), bg_scale), _bg_point(Vector2(DRILL_SITE_POS.x + 102.0, DRILL_SITE_POS.y + 82.0), bg_scale), Color8(112, 84, 66), _bg_thickness(4.0, bg_scale), true)
+		draw_line(_bg_point(Vector2(DRILL_SITE_POS.x + 126.0, DRILL_SITE_POS.y - 92.0), bg_scale), _bg_point(Vector2(DRILL_SITE_POS.x - 88.0, DRILL_SITE_POS.y + 96.0), bg_scale), Color8(112, 84, 66), _bg_thickness(4.0, bg_scale), true)
+		draw_line(_bg_point(Vector2(DRILL_SITE_POS.x - 170.0, DRILL_SITE_POS.y - 22.0), bg_scale), _bg_point(Vector2(DRILL_SITE_POS.x - 84.0, DRILL_SITE_POS.y + 16.0), bg_scale), Color8(67, 55, 46), _bg_thickness(10.0, bg_scale), true)
+		draw_line(_bg_point(Vector2(DRILL_SITE_POS.x + 82.0, DRILL_SITE_POS.y - 34.0), bg_scale), _bg_point(Vector2(DRILL_SITE_POS.x + 180.0, DRILL_SITE_POS.y + 12.0), bg_scale), Color8(67, 55, 46), _bg_thickness(10.0, bg_scale), true)
 
-	var lane_rect := Rect2(Vector2(FARMHOUSE_POS.x - 62.0, 420.0), Vector2(124.0, 180.0))
+	var fence_post_start := int(round(96.0 * bg_scale.x))
+	var fence_post_end := maxi(fence_post_start + 1, int(round(viewport_size.x - 96.0 * bg_scale.x)))
+	var fence_step := maxi(24, int(round(48.0 * bg_scale.x)))
+	var fence_top_y := _bg_point(Vector2(0.0, 440.0), bg_scale).y
+	var fence_bottom_y := _bg_point(Vector2(0.0, 470.0), bg_scale).y
+	for x in range(fence_post_start, fence_post_end, fence_step):
+		draw_line(Vector2(float(x), fence_top_y), Vector2(float(x), fence_bottom_y), Color8(235, 224, 193), _bg_thickness(3.0, bg_scale), true)
+	if act_two_active:
+		draw_line(_bg_point(Vector2(72.0, 444.0), bg_scale), _bg_point(Vector2(508.0, 444.0), bg_scale), Color8(235, 224, 193), _bg_thickness(4.0, bg_scale), true)
+		draw_line(_bg_point(Vector2(776.0, 444.0), bg_scale), Vector2(maxf(_bg_point(Vector2(1208.0, 0.0), bg_scale).x, viewport_size.x - 72.0 * bg_scale.x), _bg_point(Vector2(0.0, 444.0), bg_scale).y), Color8(235, 224, 193), _bg_thickness(4.0, bg_scale), true)
+		draw_line(_bg_point(Vector2(72.0, 470.0), bg_scale), _bg_point(Vector2(492.0, 470.0), bg_scale), Color8(235, 224, 193), _bg_thickness(4.0, bg_scale), true)
+		draw_line(_bg_point(Vector2(792.0, 470.0), bg_scale), Vector2(maxf(_bg_point(Vector2(1208.0, 0.0), bg_scale).x, viewport_size.x - 72.0 * bg_scale.x), _bg_point(Vector2(0.0, 470.0), bg_scale).y), Color8(235, 224, 193), _bg_thickness(4.0, bg_scale), true)
+	else:
+		draw_line(_bg_point(Vector2(72.0, 444.0), bg_scale), Vector2(maxf(_bg_point(Vector2(1208.0, 0.0), bg_scale).x, viewport_size.x - 72.0 * bg_scale.x), _bg_point(Vector2(0.0, 444.0), bg_scale).y), Color8(235, 224, 193), _bg_thickness(4.0, bg_scale), true)
+		draw_line(_bg_point(Vector2(72.0, 470.0), bg_scale), Vector2(maxf(_bg_point(Vector2(1208.0, 0.0), bg_scale).x, viewport_size.x - 72.0 * bg_scale.x), _bg_point(Vector2(0.0, 470.0), bg_scale).y), Color8(235, 224, 193), _bg_thickness(4.0, bg_scale), true)
+
+	var lane_rect := _bg_rect(Rect2(Vector2(FARMHOUSE_POS.x - 62.0, 420.0), Vector2(124.0, 180.0)), bg_scale)
 	draw_rect(lane_rect, Color8(170, 139, 94))
 
-	var barn_body := Rect2(FARMHOUSE_POS + Vector2(-108.0, -112.0), Vector2(216.0, 118.0))
+	var barn_body := _bg_rect(Rect2(FARMHOUSE_POS + Vector2(-108.0, -112.0), Vector2(216.0, 118.0)), bg_scale)
 	draw_rect(barn_body, Color8(188, 62, 43))
-	draw_rect(Rect2(FARMHOUSE_POS + Vector2(-26.0, -56.0), Vector2(52.0, 62.0)), Color8(93, 52, 33))
-	draw_rect(Rect2(FARMHOUSE_POS + Vector2(-82.0, -86.0), Vector2(44.0, 34.0)), Color8(242, 233, 210))
-	draw_rect(Rect2(FARMHOUSE_POS + Vector2(38.0, -86.0), Vector2(44.0, 34.0)), Color8(242, 233, 210))
+	draw_rect(_bg_rect(Rect2(FARMHOUSE_POS + Vector2(-26.0, -56.0), Vector2(52.0, 62.0)), bg_scale), Color8(93, 52, 33))
+	draw_rect(_bg_rect(Rect2(FARMHOUSE_POS + Vector2(-82.0, -86.0), Vector2(44.0, 34.0)), bg_scale), Color8(242, 233, 210))
+	draw_rect(_bg_rect(Rect2(FARMHOUSE_POS + Vector2(38.0, -86.0), Vector2(44.0, 34.0)), bg_scale), Color8(242, 233, 210))
 
 	var roof_points := PackedVector2Array([
-		FARMHOUSE_POS + Vector2(-122.0, -112.0),
-		FARMHOUSE_POS + Vector2(0.0, -186.0),
-		FARMHOUSE_POS + Vector2(122.0, -112.0)
+		_bg_point(FARMHOUSE_POS + Vector2(-122.0, -112.0), bg_scale),
+		_bg_point(FARMHOUSE_POS + Vector2(0.0, -186.0), bg_scale),
+		_bg_point(FARMHOUSE_POS + Vector2(122.0, -112.0), bg_scale)
 	])
 	draw_colored_polygon(roof_points, Color8(88, 41, 34))
 
-	var silo_rect := Rect2(FARMHOUSE_POS + Vector2(146.0, -148.0), Vector2(58.0, 154.0))
+	var silo_rect := _bg_rect(Rect2(FARMHOUSE_POS + Vector2(146.0, -148.0), Vector2(58.0, 154.0)), bg_scale)
 	draw_rect(silo_rect, Color8(113, 123, 134))
-	draw_circle(FARMHOUSE_POS + Vector2(175.0, -148.0), 29.0, Color8(141, 152, 163))
+	draw_circle(_bg_point(FARMHOUSE_POS + Vector2(175.0, -148.0), bg_scale), _bg_radius(29.0, bg_scale), Color8(141, 152, 163))
+
+	# Farm penalty visuals
+	if silo_penalty_visual_active:
+		var crack_pulse := (sin(penalty_pulse_time * 2.0) + 1.0) * 0.5
+		var crack_alpha := lerpf(0.4, 0.7, crack_pulse)
+		var crack_color := Color(0.85, 0.25, 0.18, crack_alpha)
+		draw_line(_bg_point(FARMHOUSE_POS + Vector2(-60.0, -90.0), bg_scale), _bg_point(FARMHOUSE_POS + Vector2(-20.0, -40.0), bg_scale), crack_color, _bg_thickness(3.0, bg_scale), true)
+		draw_line(_bg_point(FARMHOUSE_POS + Vector2(40.0, -80.0), bg_scale), _bg_point(FARMHOUSE_POS + Vector2(70.0, -30.0), bg_scale), crack_color, _bg_thickness(3.0, bg_scale), true)
+		var icon_pos := _bg_point(FARMHOUSE_POS + Vector2(0.0, -198.0), bg_scale)
+		draw_circle(icon_pos, _bg_radius(8.0, bg_scale), Color(0.85, 0.18, 0.14, 0.7))
+		draw_line(icon_pos + _bg_size(Vector2(-5.0, 5.0), bg_scale), icon_pos + _bg_size(Vector2(5.0, -5.0), bg_scale), Color(1.0, 1.0, 1.0, 0.8), _bg_thickness(2.0, bg_scale), true)
+
+	if power_penalty_visual_active:
+		var flicker := randf() < 0.35
+		if flicker:
+			var arc_alpha := randf_range(0.15, 0.35)
+			var arc_color := Color(0.5, 0.7, 0.9, arc_alpha)
+			draw_arc(_bg_point(FARMHOUSE_POS + Vector2(-90.0, -130.0), bg_scale), _bg_radius(16.0, bg_scale), -0.8, 0.8, 12, arc_color, _bg_thickness(2.0, bg_scale), true)
+			draw_arc(_bg_point(FARMHOUSE_POS + Vector2(90.0, -130.0), bg_scale), _bg_radius(14.0, bg_scale), 1.8, 3.6, 12, arc_color, _bg_thickness(2.0, bg_scale), true)
+
+	# Dawn sky transition (wave 10)
+	if dawn_progress > 0.0:
+		var sky_alpha := dawn_progress * 0.35
+		var dawn_color := Color(1.0, 0.72, 0.38, sky_alpha)
+		draw_rect(Rect2(Vector2.ZERO, Vector2(viewport_size.x, _bg_point(Vector2(0.0, 248.0), bg_scale).y)), dawn_color)
+		if dawn_progress > 0.5:
+			var horizon_alpha := (dawn_progress - 0.5) * 0.6
+			draw_rect(Rect2(Vector2.ZERO, Vector2(viewport_size.x, _bg_point(Vector2(0.0, 80.0), bg_scale).y)), Color(1.0, 0.85, 0.55, horizon_alpha))
+
+	# Excavation depth bar (Act 2)
+	if act_two_active and wave_active and excavation_depth > 0.0:
+		var bar_x := _bg_point(Vector2(536.0, 78.0), bg_scale).x
+		var bar_y := _bg_point(Vector2(0.0, 78.0), bg_scale).y
+		var bar_w := _bg_size(Vector2(208.0, 0.0), bg_scale).x
+		var bar_h := _bg_size(Vector2(0.0, 12.0), bg_scale).y
+		draw_rect(Rect2(Vector2(bar_x, bar_y), Vector2(bar_w, bar_h)), Color8(42, 36, 32, 180))
+		var fill_ratio := clampf(excavation_depth / EXCAVATION_MAX, 0.0, 1.0)
+		var fill_color := Color8(214, 82, 62) if fill_ratio > 0.7 else Color8(218, 168, 82)
+		draw_rect(Rect2(Vector2(bar_x + 1.0, bar_y + 1.0), Vector2((bar_w - 2.0) * fill_ratio, bar_h - 2.0)), fill_color)
+
+	_draw_threat_indicators(viewport_size)

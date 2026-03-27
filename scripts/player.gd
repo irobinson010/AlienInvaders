@@ -12,6 +12,8 @@ var touch_controls_enabled := false
 var touch_move_vector := Vector2.ZERO
 var touch_fire_active := false
 var touch_aim_direction := Vector2.RIGHT
+var recoil_offset := 0.0
+var recoil_decay := 12.0
 
 
 func _ready() -> void:
@@ -46,9 +48,19 @@ func _physics_process(delta: float) -> void:
 	rotation = aim_direction.angle()
 	fire_cooldown = maxf(0.0, fire_cooldown - delta)
 
+	if recoil_offset > 0.01:
+		recoil_offset = maxf(0.0, recoil_offset - recoil_decay * delta)
+		queue_redraw()
+
 	var wants_fire := touch_fire_active if touch_controls_enabled else (Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or Input.is_action_pressed("fire"))
 	if wants_fire and fire_cooldown <= 0.0:
 		fire_cooldown = fire_interval
+		if weapon_style == "tractor_cannon":
+			recoil_offset = 7.0
+		elif weapon_style == "scrap_blaster":
+			recoil_offset = 5.0
+		else:
+			recoil_offset = 4.0
 		fired.emit(global_position + aim_direction * 28.0, aim_direction)
 
 
@@ -91,24 +103,25 @@ func stop_touch_aim() -> void:
 
 
 func _draw() -> void:
-	draw_circle(Vector2.ZERO, 16.0, Color8(69, 107, 192))
+	var recoil_vec := Vector2(-recoil_offset, 0.0)
+	draw_circle(recoil_vec, 16.0, Color8(69, 107, 192))
 	if weapon_style == "tractor_cannon":
-		draw_rect(Rect2(Vector2(-2.0, -8.0), Vector2(30.0, 16.0)), Color8(96, 108, 124))
-		draw_rect(Rect2(Vector2(18.0, -6.0), Vector2(18.0, 12.0)), Color8(189, 120, 56))
-		draw_circle(Vector2(5.0, -14.0), 7.0, Color8(201, 186, 120))
+		draw_rect(Rect2(Vector2(-2.0, -8.0) + recoil_vec, Vector2(30.0, 16.0)), Color8(96, 108, 124))
+		draw_rect(Rect2(Vector2(18.0, -6.0) + recoil_vec, Vector2(18.0, 12.0)), Color8(189, 120, 56))
+		draw_circle(Vector2(5.0, -14.0) + recoil_vec, 7.0, Color8(201, 186, 120))
 	elif weapon_style == "scrap_blaster":
-		draw_rect(Rect2(Vector2(-1.0, -7.0), Vector2(28.0, 14.0)), Color8(112, 132, 148))
-		draw_rect(Rect2(Vector2(18.0, -5.0), Vector2(14.0, 10.0)), Color8(234, 155, 82))
-		draw_circle(Vector2(6.0, -13.0), 6.0, Color8(227, 201, 127))
+		draw_rect(Rect2(Vector2(-1.0, -7.0) + recoil_vec, Vector2(28.0, 14.0)), Color8(112, 132, 148))
+		draw_rect(Rect2(Vector2(18.0, -5.0) + recoil_vec, Vector2(14.0, 10.0)), Color8(234, 155, 82))
+		draw_circle(Vector2(6.0, -13.0) + recoil_vec, 6.0, Color8(227, 201, 127))
 	else:
-		draw_rect(Rect2(Vector2(2.0, -5.0), Vector2(24.0, 10.0)), Color8(242, 143, 59))
-	draw_circle(Vector2(-5.0, -17.0), 10.0, Color8(245, 214, 181))
-	draw_line(Vector2(-5.0, 11.0), Vector2(-13.0, 24.0), Color8(77, 58, 41), 4.0, true)
-	draw_line(Vector2(3.0, 11.0), Vector2(11.0, 24.0), Color8(77, 58, 41), 4.0, true)
-	draw_line(Vector2(-8.0, -4.0), Vector2(-20.0, 6.0), Color8(245, 214, 181), 4.0, true)
+		draw_rect(Rect2(Vector2(2.0, -5.0) + recoil_vec, Vector2(24.0, 10.0)), Color8(242, 143, 59))
+	draw_circle(Vector2(-5.0, -17.0) + recoil_vec, 10.0, Color8(245, 214, 181))
+	draw_line(Vector2(-5.0, 11.0) + recoil_vec, Vector2(-13.0, 24.0) + recoil_vec, Color8(77, 58, 41), 4.0, true)
+	draw_line(Vector2(3.0, 11.0) + recoil_vec, Vector2(11.0, 24.0) + recoil_vec, Color8(77, 58, 41), 4.0, true)
+	draw_line(Vector2(-8.0, -4.0) + recoil_vec, Vector2(-20.0, 6.0) + recoil_vec, Color8(245, 214, 181), 4.0, true)
 	if weapon_style == "tractor_cannon":
-		draw_line(Vector2(2.0, -2.0), Vector2(36.0, -2.0), Color8(42, 40, 36), 10.0, true)
+		draw_line(Vector2(2.0, -2.0) + recoil_vec, Vector2(36.0, -2.0) + recoil_vec, Color8(42, 40, 36), 10.0, true)
 	elif weapon_style == "scrap_blaster":
-		draw_line(Vector2(2.0, -2.0), Vector2(32.0, -2.0), Color8(48, 44, 38), 8.0, true)
+		draw_line(Vector2(2.0, -2.0) + recoil_vec, Vector2(32.0, -2.0) + recoil_vec, Color8(48, 44, 38), 8.0, true)
 	else:
-		draw_line(Vector2(2.0, -2.0), Vector2(28.0, -2.0), Color8(56, 47, 39), 6.0, true)
+		draw_line(Vector2(2.0, -2.0) + recoil_vec, Vector2(28.0, -2.0) + recoil_vec, Color8(56, 47, 39), 6.0, true)

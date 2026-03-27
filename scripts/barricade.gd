@@ -3,6 +3,7 @@ extends Node2D
 var max_health := 6
 var health := 6
 var hit_flash := 0.0
+var contact_damage := 1
 
 
 func _ready() -> void:
@@ -31,6 +32,12 @@ func is_destroyed() -> bool:
 	return health <= 0
 
 
+func get_contact_damage() -> int:
+	if is_destroyed():
+		return 0
+	return contact_damage
+
+
 func _physics_process(delta: float) -> void:
 	if hit_flash > 0.0:
 		hit_flash = maxf(0.0, hit_flash - delta)
@@ -55,6 +62,14 @@ func _draw() -> void:
 		draw_line(Vector2(spike_x, -26.0), Vector2(spike_x + 6.0, -18.0), wire_color, 2.0, true)
 		draw_line(Vector2(spike_x, -10.0), Vector2(spike_x + 6.0, -2.0), wire_color, 2.0, true)
 		draw_line(Vector2(spike_x, 6.0), Vector2(spike_x + 6.0, 14.0), wire_color, 2.0, true)
+
+	# Barbed wire spikes
+	var spike_color := Color8(178, 162, 128)
+	for i in range(6):
+		var angle := float(i) * PI / 3.0
+		var spike_base := Vector2(cos(angle), sin(angle)) * 14.0
+		var spike_tip := Vector2(cos(angle), sin(angle)) * 22.0
+		draw_line(spike_base, spike_tip, spike_color, 2.0, true)
 
 	var health_ratio := float(health) / float(maxi(1, max_health))
 	draw_rect(Rect2(Vector2(-30.0, -56.0), Vector2(60.0, 7.0)), Color8(30, 26, 22))

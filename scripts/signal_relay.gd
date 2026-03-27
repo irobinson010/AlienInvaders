@@ -71,6 +71,13 @@ func take_damage(amount: int) -> void:
 	queue_redraw()
 
 
+func repair(amount: int) -> void:
+	if amount <= 0 or health <= 0:
+		return
+	health = mini(max_health, health + amount)
+	queue_redraw()
+
+
 func get_health() -> int:
 	return health
 
@@ -103,3 +110,16 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2(-26.0, -72.0), Vector2(52.0 * (float(health) / float(maxi(1, max_health))), 3.0)), Color8(132, 225, 255))
 	if pulse_flash > 0.0:
 		draw_arc(Vector2.ZERO, 38.0, -PI, PI, 32, Color(0.76, 0.86, 1.0, 0.55), 3.0, true)
+	if health < max_health and max_health > 0:
+		var bar_y := -46.0
+		var bar_w := 36.0
+		var bar_h := 4.0
+		var bar_x := -bar_w * 0.5
+		draw_rect(Rect2(Vector2(bar_x, bar_y), Vector2(bar_w, bar_h)), Color8(40, 36, 32, 180))
+		var ratio := clampf(float(health) / float(max_health), 0.0, 1.0)
+		var fill_color := Color8(92, 214, 92)
+		if ratio <= 0.25:
+			fill_color = Color8(214, 72, 62)
+		elif ratio <= 0.5:
+			fill_color = Color8(214, 196, 82)
+		draw_rect(Rect2(Vector2(bar_x + 1.0, bar_y + 1.0), Vector2((bar_w - 2.0) * ratio, bar_h - 2.0)), fill_color)

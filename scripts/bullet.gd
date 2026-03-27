@@ -11,6 +11,8 @@ var damage_falloff_start := -1.0
 var damage_falloff_end := -1.0
 var minimum_damage := 1
 var distance_traveled := 0.0
+var trail_positions: Array[Vector2] = []
+var trail_max := 5
 
 
 func _ready() -> void:
@@ -44,6 +46,11 @@ func configure(new_direction: Vector2, new_speed: float = 860.0, new_damage: int
 
 
 func _physics_process(delta: float) -> void:
+	trail_positions.push_front(global_position)
+	if trail_positions.size() > trail_max:
+		trail_positions.resize(trail_max)
+	queue_redraw()
+
 	var start_position := global_position
 	var end_position := start_position + direction * speed * delta
 	var query := PhysicsRayQueryParameters2D.new()
@@ -125,5 +132,14 @@ func _effective_damage() -> int:
 
 
 func _draw() -> void:
+	if trail_positions.size() >= 2:
+		for i in range(trail_positions.size() - 1):
+			var alpha := lerpf(0.5, 0.05, float(i) / float(trail_positions.size() - 1))
+			var width := lerpf(radius * 0.6, 1.0, float(i) / float(trail_positions.size() - 1))
+			var trail_color := Color(tail_color.r, tail_color.g, tail_color.b, alpha)
+			var from_local := (trail_positions[i] - global_position).rotated(-rotation)
+			var to_local := (trail_positions[i + 1] - global_position).rotated(-rotation)
+			draw_line(from_local, to_local, trail_color, width, true)
+
 	draw_circle(Vector2.ZERO, radius, core_color)
 	draw_rect(Rect2(Vector2(0.0, -maxf(2.0, radius * 0.4)), Vector2(8.0 + radius, maxf(4.0, radius * 0.8))), tail_color)

@@ -3,6 +3,9 @@ extends Area2D
 signal build_requested(spot)
 
 var occupied := false
+var show_range_preview := false
+var preview_range := 230.0
+var preview_color := Color(0.4, 0.55, 0.7, 0.12)
 
 
 func _ready() -> void:
@@ -22,6 +25,14 @@ func _ready() -> void:
 
 func mark_built() -> void:
 	occupied = true
+	show_range_preview = false
+	queue_redraw()
+
+
+func set_range_preview(show: bool, range_value: float = 230.0, color: Color = Color(0.4, 0.55, 0.7, 0.12)) -> void:
+	show_range_preview = show and not occupied
+	preview_range = range_value
+	preview_color = color
 	queue_redraw()
 
 
@@ -45,3 +56,7 @@ func _draw() -> void:
 		draw_rect(rect, Color8(255, 236, 177), false, 3.0)
 		draw_line(Vector2(-14.0, 0.0), Vector2(14.0, 0.0), Color8(255, 248, 218), 4.0, true)
 		draw_line(Vector2(0.0, -14.0), Vector2(0.0, 14.0), Color8(255, 248, 218), 4.0, true)
+
+	if show_range_preview and not occupied:
+		draw_arc(Vector2.ZERO, preview_range, -PI, PI, 48, preview_color, 2.0, true)
+		draw_circle(Vector2.ZERO, preview_range, Color(preview_color.r, preview_color.g, preview_color.b, preview_color.a * 0.3))

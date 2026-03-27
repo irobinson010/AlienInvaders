@@ -8,6 +8,8 @@ var cooldown := 0.25
 var damage := 1
 var stun_duration := 0.55
 var pulse_flash := 0.0
+var power_penalty_active := false
+var main_ref: Node
 
 
 func _ready() -> void:
@@ -16,10 +18,16 @@ func _ready() -> void:
 	add_to_group("farm_defenses")
 
 
-func configure(new_fire_interval: float = 1.25, new_damage: int = 1, new_stun_duration: float = 0.55) -> void:
+func set_power_penalty(active: bool) -> void:
+	power_penalty_active = active
+	queue_redraw()
+
+
+func configure(new_fire_interval: float = 1.25, new_damage: int = 1, new_stun_duration: float = 0.55, new_main_ref: Node = null) -> void:
 	fire_interval = new_fire_interval
 	damage = new_damage
 	stun_duration = new_stun_duration
+	main_ref = new_main_ref
 
 
 func set_stats(new_fire_interval: float, new_damage: int, new_stun_duration: float) -> void:
@@ -59,7 +67,8 @@ func _find_target() -> Node2D:
 	var best_target: Node2D
 	var best_distance_sq: float = range * range
 
-	for node in get_tree().get_nodes_in_group("aliens"):
+	var aliens: Array[Node] = main_ref.get_cached_aliens() if main_ref != null and main_ref.has_method("get_cached_aliens") else get_tree().get_nodes_in_group("aliens")
+	for node in aliens:
 		if node is Node2D:
 			var alien: Node2D = node
 			var distance_sq: float = global_position.distance_squared_to(alien.global_position)
@@ -76,6 +85,9 @@ func _draw() -> void:
 	if pulse_flash > 0.0:
 		coil_color = Color8(158, 214, 238)
 		arc_color = Color8(214, 247, 255)
+	elif power_penalty_active:
+		coil_color = Color8(78, 112, 138)
+		arc_color = Color8(102, 168, 192)
 
 	draw_circle(Vector2.ZERO, 16.0, Color8(68, 60, 54))
 	draw_rect(Rect2(Vector2(-6.0, -28.0), Vector2(12.0, 34.0)), coil_color)
@@ -85,3 +97,6 @@ func _draw() -> void:
 	if pulse_flash > 0.0:
 		draw_arc(Vector2.ZERO, 28.0, -0.7, 0.7, 18, arc_color, 3.0, true)
 		draw_arc(Vector2.ZERO, 34.0, 2.34, 3.94, 18, arc_color, 3.0, true)
+	if power_penalty_active and pulse_flash <= 0.0:
+		draw_line(Vector2(-6.0, -6.0), Vector2(6.0, 6.0), Color8(214, 82, 62), 2.0, true)
+		draw_line(Vector2(6.0, -6.0), Vector2(-6.0, 6.0), Color8(214, 82, 62), 2.0, true)

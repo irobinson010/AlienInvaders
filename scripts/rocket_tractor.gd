@@ -31,6 +31,14 @@ func configure(new_bullet_scene: PackedScene, new_patrol_left: float, new_patrol
 	rocket_cooldown = rocket_interval * 0.45
 
 
+func set_stats(new_patrol_speed: float, new_rocket_interval: float, new_rocket_damage: int, new_rocket_speed: float) -> void:
+	patrol_speed = new_patrol_speed
+	rocket_interval = new_rocket_interval
+	rocket_damage = new_rocket_damage
+	rocket_speed = new_rocket_speed
+	rocket_cooldown = minf(rocket_cooldown, rocket_interval)
+
+
 func set_support_active(enabled: bool) -> void:
 	support_active = enabled
 
